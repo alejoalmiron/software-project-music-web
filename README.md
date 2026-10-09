@@ -4,7 +4,8 @@
 
 SoundWave es un clon/simulador de Spotify web desarrollado con React, Vite y Tailwind CSS. El proyecto propone una experiencia de música en línea e implementa una base de autenticación, navegación y vistas principales.
 
-**Universidad Nacional de Lanús (UNLa)**  
+**Universidad Nacional de Lanús (UNLa)**
+
 **Cátedra de Proyecto de Software · 2026**
 
 ## Stack Tecnológico
