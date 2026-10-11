@@ -6,7 +6,7 @@ import { Brand } from './Login.jsx'
 
 const roles = [
   {
-    value: 'Oyente',
+    value: 'oyente',
     title: 'Oyente',
     description: 'Accedé a toda la música',
   },

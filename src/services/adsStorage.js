@@ -1,3 +1,4 @@
+import { seedAds } from '../data/ads.js'
 const ADS_KEY = 'soundwave.ads'
 
 export const BANNERS = {
@@ -10,13 +11,25 @@ export const BANNER_LABELS = {
   [BANNERS.DERECHO]: 'Derecho',
 }
 
-export function getAds() {
+function readStoredAds() {
   try {
     const parsed = JSON.parse(localStorage.getItem(ADS_KEY) ?? '[]')
     return Array.isArray(parsed) ? parsed : []
   } catch {
     return []
   }
+}
+
+// Anuncios guardados + anuncios precargados que falten.
+export function getAds() {
+  const stored = readStoredAds()
+  const missing = seedAds.filter(
+    (seed) => !stored.some((ad) => ad.id === seed.id),
+  )
+  if (missing.length === 0) return stored
+  const ads = [...missing, ...stored]
+  saveAds(ads)
+  return ads
 }
 
 function saveAds(ads) {
