@@ -63,6 +63,39 @@ El equipo está conformado por cinco integrantes:
 - **Marcos:** banners publicitarios e interrupciones para usuarios Free (US-07).
 - **Martín:** vistas de planes Premium y formulario de pago con tarjeta (US-08, US-09).
 
+
+## Gestión de anuncios en banners
+
+La aplicación muestra anuncios publicitarios en banners a los usuarios con plan gratuito. Un administrador decide cuáles se muestran.
+
+### Usuarios precargados
+
+Hay dos usuarios que ya vienen creados para probar la aplicación:
+
+| Usuario | Correo | Contraseña | Qué puede hacer |
+| --- | --- | --- | --- |
+| Administrador | admin@soundwave.com | admin123 | Gestionar los anuncios |
+| Oyente Premium (solo para pruebas) | premium@soundwave.com | premium123 | Escuchar música sin ver anuncios |
+
+Cualquier otra cuenta se crea desde "Crear cuenta". Los oyentes nuevos empiezan con el plan Free, por lo que ven los anuncios. Las cuentas quedan guardadas en el navegador, así que solo existen en la computadora donde se crearon.
+
+### Qué anuncios se ven y quién los ve
+
+- Hay dos banners: el **Inferior** (arriba del reproductor) y el **Derecho** (al costado de las canciones).
+- Cada banner muestra un solo anuncio a la vez: el que esté **Activo**.
+- Los anuncios los ven únicamente los **oyentes con plan Free**. No los ven el administrador, los publicadores ni los oyentes Premium.
+- La aplicación ya trae **4 anuncios precargados** (2 por banner), de los cuales uno por banner está activo desde el inicio. Así los banners se ven apenas se abre la aplicación, sin cargar nada.
+
+### Cómo gestionar los anuncios (administrador)
+
+1. Iniciar sesión como administrador.
+2. Entrar a **Gestionar anuncios** desde el menú lateral.
+3. Para **cargar un anuncio nuevo**: escribir un nombre, elegir una imagen JPG o PNG de hasta 2 MB, elegir el banner (Inferior o Derecho) y presionar **Cargar anuncio**. Los anuncios nuevos quedan **Inactivos**.
+4. Para **mostrar un anuncio**: presionar **Activar** en la lista. Si ya había otro activo en ese banner, pasa a Inactivo automáticamente.
+5. Para **dejar de mostrarlo**: presionar **Desactivar**.
+
+> Los anuncios y las cuentas se guardan en el navegador, por eso cada computadora tiene sus propios datos.
+
 ## Licencia / Estado
 
 Proyecto con fines estrictamente académicos, desarrollado en el marco de la Cátedra de Proyecto de Software de la Universidad Nacional de Lanús (UNLa), 2026.
