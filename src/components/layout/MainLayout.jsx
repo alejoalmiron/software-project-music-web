@@ -11,10 +11,16 @@ import {
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { navigationByRole } from '../../config/navigation.js'
 import { useAuth } from '../../context/AuthContext.jsx'
+import AdBanner from '../ads/AdBanner.jsx'
+import { BANNERS, getActiveAd } from '../../services/adsStorage.js'
+import { showsAds } from '../../utils/userHelpers.js'
 
 export default function MainLayout() {
   const { user } = useAuth()
   const navItems = navigationByRole[user?.role] ?? []
+  const adsVisible = showsAds(user)
+  const bottomAd = adsVisible ? getActiveAd(BANNERS.INFERIOR) : null
+  const rightAd = adsVisible ? getActiveAd(BANNERS.DERECHO) : null
   
   return (
     <div className="min-h-screen bg-canvas text-white">
@@ -52,7 +58,7 @@ export default function MainLayout() {
         </p>
       </aside>
 
-      <div className="pb-[110px] md:ml-[252px]">
+      <div className={`${bottomAd ? 'pb-[200px]' : 'pb-[110px]'} md:ml-[252px]`}>
         <header className="sticky top-0 z-10 flex h-[82px] items-center border-b border-line bg-canvas/90 px-5 backdrop-blur-xl sm:px-8">
           <label className="relative block w-full max-w-[520px]">
             <Search
@@ -72,10 +78,30 @@ export default function MainLayout() {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1440px] px-5 py-8 sm:px-8 lg:px-10">
-          <Outlet />
-        </main>
+        <div className="mx-auto flex w-full max-w-[1440px] gap-6 px-5 py-8 sm:px-8 lg:px-10">
+          <main className="min-w-0 flex-1">
+            <Outlet />
+          </main>
+          {rightAd && (
+            <aside
+              aria-label="Anuncio"
+              className="sticky top-[106px] hidden h-[340px] w-[240px] shrink-0 self-start lg:block"
+            >
+              <AdBanner ad={rightAd} />
+            </aside>
+          )}
+        </div>
+        
       </div>
+      
+      {bottomAd && (
+        <div
+          aria-label="Anuncio"
+          className="fixed inset-x-0 bottom-[88px] z-20 h-[72px] border-t border-line bg-[#0D0F12] px-4 py-2 md:left-[252px]"
+        >
+          <AdBanner ad={bottomAd} />
+        </div>
+      )}
 
       <footer className="fixed inset-x-0 bottom-0 z-30 flex min-h-[88px] items-center justify-between border-t border-line bg-[#111316] px-4 py-3 sm:px-7 md:left-[252px]">
         <div className="flex min-w-0 items-center gap-3 sm:w-[30%]">
