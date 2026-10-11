@@ -1,52 +1,63 @@
 import { createContext, useContext, useMemo, useState } from 'react'
+import { seedUsers } from '../data/users.js'
+import { FREE_PLAN, ROLES, normalizeUser } from '../utils/userHelpers.js'
 
 const AuthContext = createContext(null)
 
 const SESSION_KEY = 'soundwave.session'
 const USERS_KEY = 'soundwave.users'
-const ALLOWED_ROLES = new Set(['free', 'publicador', 'admin'])
+const REGISTRABLE_ROLES = new Set([ROLES.OYENTE, ROLES.PUBLICADOR])
 
-function readSession() {
-  const savedSession = localStorage.getItem(SESSION_KEY)
-  if (!savedSession) return null
-
+function readStoredUsers() {
+  const saved = localStorage.getItem(USERS_KEY)
+  if (!saved) return []
   try {
-    const parsedSession = JSON.parse(savedSession)
-    if (
-      parsedSession &&
-      typeof parsedSession.id === 'string' &&
-      typeof parsedSession.email === 'string' &&
-      ALLOWED_ROLES.has(parsedSession.role)
-    ) {
-      return parsedSession
-    }
+    const parsed = JSON.parse(saved)
+    if (!Array.isArray(parsed)) throw new Error('formato inválido')
+    return parsed
   } catch {
-    localStorage.removeItem(SESSION_KEY)
+    throw new Error('No se pudieron leer las cuentas guardadas del navegador.')
   }
-
-  return null
 }
 
+// Cuentas guardadas (normalizadas) + admin precargado.
 function readUsers() {
-  const savedUsers = localStorage.getItem(USERS_KEY)
-  if (!savedUsers) return []
+  const stored = readStoredUsers().map(normalizeUser)
+  const missingSeeds = seedUsers.filter(
+    (seed) => !stored.some((account) => account.id === seed.id),
+  )
+  const users = [...missingSeeds, ...stored]
+  localStorage.setItem(USERS_KEY, JSON.stringify(users))
+  return users
+}
 
+function toSessionUser({ id, name, email, role, plan }) {
+  return { id, name, email, role, plan }
+}
+
+// La sesión guarda solo el id; los datos se leen siempre de las cuentas,
+// así un cambio de plan se refleja sin volver a iniciar sesión.
+function readSession() {
   try {
-    const parsedUsers = JSON.parse(savedUsers)
-    if (!Array.isArray(parsedUsers)) {
-      throw new Error('El formato de las cuentas guardadas no es válido.')
-    }
-    return parsedUsers
-  } catch (error) {
-    if (error instanceof SyntaxError) {
-      throw new Error('No se pudieron leer las cuentas guardadas del navegador.')
-    }
-    throw error
+    const saved = JSON.parse(localStorage.getItem(SESSION_KEY) ?? 'null')
+    if (!saved || typeof saved.id !== 'string') return null
+    const account = readUsers().find((candidate) => candidate.id === saved.id)
+    return account ? toSessionUser(account) : null
+  } catch {
+    localStorage.removeItem(SESSION_KEY)
+    return null
   }
 }
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(readSession)
+
+  function startSession(account) {
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ id: account.id }))
+    const session = toSessionUser(account)
+    setUser(session)
+    return session
+  }
 
   function login({ email, password }) {
     const normalizedEmail = email.trim().toLowerCase()
@@ -54,30 +65,20 @@ export function AuthProvider({ children }) {
       (candidate) =>
         candidate.email === normalizedEmail && candidate.password === password,
     )
-
     if (!account) {
       throw new Error('El correo electrónico o la contraseña son incorrectos.')
     }
-
-    const session = {
-      id: account.id,
-      name: account.name,
-      email: account.email,
-      role: account.role,
-    }
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session))
-    setUser(session)
-    return session
+    return startSession(account)
   }
 
-  function register({ name, email, password, role = 'free' }) {
+  function register({ name, email, password, role = ROLES.OYENTE }) {
     const normalizedName = name.trim()
     const normalizedEmail = email.trim().toLowerCase()
 
     if (!normalizedName || !normalizedEmail || !password) {
       throw new Error('Completá todos los campos para crear tu cuenta.')
     }
-    if (!ALLOWED_ROLES.has(role) || role === 'admin') {
+    if (!REGISTRABLE_ROLES.has(role)) {
       throw new Error('El tipo de usuario seleccionado no es válido.')
     }
 
@@ -92,19 +93,22 @@ export function AuthProvider({ children }) {
       email: normalizedEmail,
       password,
       role,
+      plan: role === ROLES.OYENTE ? FREE_PLAN : null,
     }
-    users.push(account)
-    localStorage.setItem(USERS_KEY, JSON.stringify(users))
+    localStorage.setItem(USERS_KEY, JSON.stringify([...users, account]))
+    return startSession(account)
+  }
 
-    const session = {
-      id: account.id,
-      name: account.name,
-      email: account.email,
-      role: account.role,
+  // Solo para oyentes. Se usará al pagar Premium (30 días vía expiresAt).
+  function updatePlan(plan) {
+    if (!user || user.role !== ROLES.OYENTE) {
+      throw new Error('Solo los oyentes pueden cambiar de plan.')
     }
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session))
-    setUser(session)
-    return session
+    const users = readUsers().map((account) =>
+      account.id === user.id ? { ...account, plan } : account,
+    )
+    localStorage.setItem(USERS_KEY, JSON.stringify(users))
+    setUser({ ...user, plan })
   }
 
   function logout() {
@@ -117,8 +121,10 @@ export function AuthProvider({ children }) {
       user,
       isAuthenticated: Boolean(user),
       role: user?.role ?? null,
+      plan: user?.plan ?? null,
       login,
       register,
+      updatePlan,
       logout,
     }),
     [user],

@@ -6,7 +6,7 @@ import { Brand } from './Login.jsx'
 
 const roles = [
   {
-    value: 'free',
+    value: 'Oyente',
     title: 'Oyente',
     description: 'Accedé a toda la música',
   },
@@ -23,7 +23,7 @@ export default function Register() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [role, setRole] = useState('free')
+  const [role, setRole] = useState('oyente')
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
