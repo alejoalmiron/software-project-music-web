@@ -1,6 +1,5 @@
 import {
   Disc3,
-  Home,
   Play,
   Repeat,
   Search,
@@ -10,8 +9,13 @@ import {
   Volume2,
 } from 'lucide-react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
+import { navigationByRole } from '../../config/navigation.js'
+import { useAuth } from '../../context/AuthContext.jsx'
 
 export default function MainLayout() {
+  const { user } = useAuth()
+  const navItems = navigationByRole[user?.role] ?? []
+  
   return (
     <div className="min-h-screen bg-canvas text-white">
       <aside className="fixed inset-y-0 left-0 z-20 hidden w-[252px] border-r border-line bg-[#101215] px-5 py-7 md:flex md:flex-col">
@@ -25,20 +29,23 @@ export default function MainLayout() {
         </Link>
 
         <nav aria-label="Navegación principal">
-          <NavLink
-            to="/"
-            end
-            className={({ isActive }) =>
-              `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition ${
-                isActive
-                  ? 'bg-brand/10 text-brand'
-                  : 'text-[#A1A7AF] hover:bg-white/5 hover:text-white'
-              }`
-            }
-          >
-            <Home size={19} />
-            Inicio
-          </NavLink>
+          {navItems.map(({ label, to, icon: Icon, end }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              className={({ isActive }) =>
+                `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition ${
+                  isActive
+                    ? 'bg-brand/10 text-brand'
+                    : 'text-[#A1A7AF] hover:bg-white/5 hover:text-white'
+                }`
+              }
+            >
+              <Icon size={19} />
+              {label}
+            </NavLink>
+          ))}
         </nav>
         <p className="mt-auto px-3 text-xs leading-5 text-[#626971]">
           Tu música, en todas partes.
