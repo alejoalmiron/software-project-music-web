@@ -1,124 +1,11 @@
 import { LogOut, Music2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
+import { GENRES, getSongsByGenre } from '../data/songs.js'
 
-const recommendations = [
-  {
-    genre: 'Pop',
-    songs: [
-      {
-        title: 'Midnight City',
-        artist: 'M83',
-        image:
-          'https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=640&q=85',
-      },
-      {
-        title: 'Golden',
-        artist: 'Harry Styles',
-        image:
-          'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=640&q=85',
-      },
-      {
-        title: 'Electric Feel',
-        artist: 'MGMT',
-        image:
-          'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=640&q=85',
-      },
-      {
-        title: 'Dreams',
-        artist: 'The Cranberries',
-        image:
-          'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=640&q=85',
-      },
-    ],
-  },
-  {
-    genre: 'Rock',
-    songs: [
-      {
-        title: 'Do I Wanna Know?',
-        artist: 'Arctic Monkeys',
-        image:
-          'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=640&q=85',
-      },
-      {
-        title: 'Everlong',
-        artist: 'Foo Fighters',
-        image:
-          'https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?auto=format&fit=crop&w=640&q=85',
-      },
-      {
-        title: 'Californication',
-        artist: 'Red Hot Chili Peppers',
-        image:
-          'https://images.unsplash.com/photo-1506157786151-b8491531f063?auto=format&fit=crop&w=640&q=85',
-      },
-      {
-        title: 'The Pretender',
-        artist: 'Foo Fighters',
-        image:
-          'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=640&q=85',
-      },
-    ],
-  },
-  {
-    genre: 'Hip Hop',
-    songs: [
-      {
-        title: 'Passionfruit',
-        artist: 'Drake',
-        image:
-          'https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=640&q=85',
-      },
-      {
-        title: 'Good Days',
-        artist: 'SZA',
-        image:
-          'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=640&q=85',
-      },
-      {
-        title: 'Nights',
-        artist: 'Frank Ocean',
-        image:
-          'https://images.unsplash.com/photo-1487180144351-b8472da7d491?auto=format&fit=crop&w=640&q=85',
-      },
-      {
-        title: 'After Hours',
-        artist: 'The Weeknd',
-        image:
-          'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=640&q=85',
-      },
-    ],
-  },
-  {
-    genre: 'Electrónica',
-    songs: [
-      {
-        title: 'Innerbloom',
-        artist: 'RÜFÜS DU SOL',
-        image:
-          'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=640&q=85',
-      },
-      {
-        title: 'Sunset Lover',
-        artist: 'Petit Biscuit',
-        image:
-          'https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=640&q=85',
-      },
-      {
-        title: 'A Moment Apart',
-        artist: 'ODESZA',
-        image:
-          'https://images.unsplash.com/photo-1506157786151-b8491531f063?auto=format&fit=crop&w=640&q=85',
-      },
-      {
-        title: 'Strobe',
-        artist: 'deadmau5',
-        image:
-          'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=640&q=85',
-      },
-    ],
-  },
-]
+const recommendations = GENRES.map((genre) => ({
+  genre,
+  songs: getSongsByGenre(genre),
+}))
 
 export default function Dashboard() {
   const { user, logout } = useAuth()
@@ -160,7 +47,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
               {section.songs.map((song) => (
                 <article
-                  key={`${section.genre}-${song.title}`}
+                  key={song.id}
                   className="group rounded-2xl border border-line bg-surface p-3 transition hover:border-[#333A41] hover:bg-[#17191D] sm:p-4"
                 >
                   <div className="relative aspect-square overflow-hidden rounded-xl bg-[#202329]">

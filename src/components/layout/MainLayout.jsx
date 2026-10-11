@@ -54,8 +54,8 @@ export default function MainLayout() {
             />
             <input
               type="search"
-              placeholder="Buscar canciones, artistas, álbumes..."
-              aria-label="Buscar canciones, artistas y álbumes"
+              placeholder="Buscar canciones..."
+              aria-label="Buscar canciones"
               className="w-full rounded-full border border-line bg-[#15181C] py-3 pl-11 pr-5 text-sm text-white outline-none transition placeholder:text-[#737982] focus:border-[#3B454D]"
             />
           </label>
