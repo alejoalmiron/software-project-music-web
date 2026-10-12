@@ -1,5 +1,6 @@
 import { LogOut, Music2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
+import { usePlayer } from '../context/PlayerContext.jsx'
 import { GENRES, getSongsByGenre } from '../data/songs.js'
 
 const recommendations = GENRES.map((genre) => ({
@@ -9,6 +10,7 @@ const recommendations = GENRES.map((genre) => ({
 
 export default function Dashboard() {
   const { user, logout } = useAuth()
+  const { playSong } = usePlayer() 
 
   return (
     <div>
@@ -48,7 +50,8 @@ export default function Dashboard() {
               {section.songs.map((song) => (
                 <article
                   key={song.id}
-                  className="group rounded-2xl border border-line bg-surface p-3 transition hover:border-[#333A41] hover:bg-[#17191D] sm:p-4"
+                  onClick={() => playSong(song)} // 2. Agregamos el evento onClick aquí
+                  className="group cursor-pointer rounded-2xl border border-line bg-surface p-3 transition hover:border-[#333A41] hover:bg-[#17191D] sm:p-4" // 3. Agregamos cursor-pointer
                 >
                   <div className="relative aspect-square overflow-hidden rounded-xl bg-[#202329]">
                     <img

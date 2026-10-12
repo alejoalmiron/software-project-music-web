@@ -14,6 +14,7 @@ import { useAuth } from '../../context/AuthContext.jsx'
 import AdBanner from '../ads/AdBanner.jsx'
 import { BANNERS, getActiveAd } from '../../services/adsStorage.js'
 import { showsAds } from '../../utils/userHelpers.js'
+import MusicPlayer from '../player/MusicPlayer.jsx'
 
 export default function MainLayout() {
   const { user } = useAuth()
@@ -102,51 +103,7 @@ export default function MainLayout() {
           <AdBanner ad={bottomAd} />
         </div>
       )}
-
-      <footer className="fixed inset-x-0 bottom-0 z-30 flex min-h-[88px] items-center justify-between border-t border-line bg-[#111316] px-4 py-3 sm:px-7 md:left-[252px]">
-        <div className="flex min-w-0 items-center gap-3 sm:w-[30%]">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-[#375b48] via-[#212d27] to-[#121815]">
-            <Disc3 size={23} className="text-brand/90" />
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold">Elegí tu próximo tema</p>
-            <p className="truncate text-xs text-[#858B93]">SoundWave</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1 sm:gap-3">
-          <button className="icon-button hidden sm:inline-flex" aria-label="Aleatorio">
-            <Shuffle size={17} />
-          </button>
-          <button className="icon-button" aria-label="Anterior">
-            <SkipBack size={18} />
-          </button>
-          <button
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#101215] transition hover:scale-105"
-            aria-label="Reproducir"
-          >
-            <Play size={19} fill="currentColor" />
-          </button>
-          <button className="icon-button" aria-label="Siguiente">
-            <SkipForward size={18} />
-          </button>
-          <button className="icon-button hidden sm:inline-flex" aria-label="Repetir">
-            <Repeat size={17} />
-          </button>
-        </div>
-
-        <div className="hidden w-[30%] items-center justify-end gap-3 sm:flex">
-          <Volume2 size={18} className="text-[#9BA1A9]" />
-          <input
-            type="range"
-            min="0"
-            max="100"
-            defaultValue="68"
-            aria-label="Volumen"
-            className="h-1 w-24 cursor-pointer accent-brand"
-          />
-        </div>
-      </footer>
+      <MusicPlayer />
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import MainLayout from './components/layout/MainLayout.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
+import { PlayerProvider } from './context/PlayerContext.jsx' // agrego para importsar el provider
 import AdminAds from './pages/AdminAds.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Login from './pages/Login.jsx'
@@ -16,19 +17,21 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route element={<ProtectedRoute />}>
-            <Route element={<MainLayout />}>
-              <Route index element={<Dashboard />} />
-              <Route element={<ProtectedRoute roles={[ROLES.ADMIN]} />}>
-                <Route path="admin/anuncios" element={<AdminAds />} />
+        <PlayerProvider> {/**/}
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route element={<ProtectedRoute />}>
+              <Route element={<MainLayout />}>
+                <Route index element={<Dashboard />} />
+                <Route element={<ProtectedRoute roles={[ROLES.ADMIN]} />}>
+                  <Route path="admin/anuncios" element={<AdminAds />} />
+                </Route>
               </Route>
             </Route>
-          </Route>
-          <Route path="*" element={<NotFoundRedirect />} />
-        </Routes>
+            <Route path="*" element={<NotFoundRedirect />} />
+          </Routes>
+        </PlayerProvider> {/**/}
       </AuthProvider>
     </BrowserRouter>
   )
