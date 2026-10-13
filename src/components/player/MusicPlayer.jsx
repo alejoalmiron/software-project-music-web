@@ -1,11 +1,13 @@
 // src/components/player/MusicPlayer.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { usePlayer } from '../../context/PlayerContext.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
 import { Play, Pause, MoreVertical, Plus, Check, ListMusic } from 'lucide-react';
 import { getPlaylists, addSongToPlaylist } from '../../services/playlistStorage.js';
 
 export default function MusicPlayer() {
   const { currentSong, isPlaying, togglePlay, currentTime, seek } = usePlayer();
+  const { user } = useAuth();
   const [dragging, setDragging] = useState(false);
 
   // Estados para el menú de opciones (3 puntitos)
@@ -17,7 +19,7 @@ export default function MusicPlayer() {
   // Cargar playlists cada vez que se abre el menú
   const handleToggleMenu = () => {
     if (!menuOpen) {
-      setPlaylists(getPlaylists());
+      setPlaylists(getPlaylists(user?.id));
     }
     setMenuOpen((prev) => !prev);
   };
@@ -39,7 +41,7 @@ export default function MusicPlayer() {
 
   // Manejar adición de la canción activa a la playlist seleccionada
   const handleSelectPlaylist = (playlistId, playlistName) => {
-    addSongToPlaylist(playlistId, currentSong);
+    addSongToPlaylist(playlistId, currentSong, user?.id);
     setAddedMessage(`Agregada a ${playlistName}`);
     setTimeout(() => {
       setAddedMessage('');

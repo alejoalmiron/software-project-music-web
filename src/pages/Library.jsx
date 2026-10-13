@@ -12,9 +12,11 @@ import {
   createPlaylist,
 } from '../services/playlistStorage.js'
 import { usePlayer } from '../context/PlayerContext.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
 
 export default function Library() {
   const { playSong } = usePlayer()
+  const { user } = useAuth()
   const [playlists, setPlaylists] = useState([])
   const [selectedPlaylistId, setSelectedPlaylistId] = useState(null)
 
@@ -22,9 +24,9 @@ export default function Library() {
   const [playlistName, setPlaylistName] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
 
-  useEffect(() => {
-    setPlaylists(getPlaylists())
-  }, [])
+    useEffect(() => {
+    setPlaylists(getPlaylists(user?.id))
+  }, [user?.id])
 
   const currentPlaylist = playlists.find((p) => p.id === selectedPlaylistId)
 
@@ -48,8 +50,8 @@ export default function Library() {
     }
 
     try {
-      createPlaylist(playlistName)
-      setPlaylists(getPlaylists())
+      createPlaylist(playlistName, user?.id)
+      setPlaylists(getPlaylists(user?.id))
       handleCloseModal()
     } catch (err) {
       setErrorMessage(err.message || 'Error al crear la playlist.')
