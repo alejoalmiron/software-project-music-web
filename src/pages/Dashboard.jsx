@@ -112,9 +112,6 @@ export default function Dashboard() {
                   Recomendaciones <span className="text-[#858B93]">·</span>{' '}
                   {section.genre}
                 </h2>
-                <button className="text-xs font-semibold text-[#858B93] transition hover:text-white">
-                  Ver todo
-                </button>
               </div>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
                 {section.songs.map((song) => (
