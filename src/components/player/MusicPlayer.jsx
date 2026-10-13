@@ -21,7 +21,7 @@ export default function MusicPlayer() {
     : 0;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between border-t border-line bg-[#121418] px-4 py-3 text-white shadow-lg md:left-[252px]">
+    <div className="fixed bottom-0 left-0 right-0 z-50 h-[88px] flex items-center justify-between border-t border-line bg-[#121418] px-4 py-3 text-white shadow-lg md:left-[252px]">
       
       {/* Imagen, Título y Artista de la canción */}
       <div className="flex w-1/4 items-center gap-3">

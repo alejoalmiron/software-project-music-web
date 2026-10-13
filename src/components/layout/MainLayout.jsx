@@ -14,15 +14,20 @@ import { useAuth } from '../../context/AuthContext.jsx'
 import AdBanner from '../ads/AdBanner.jsx'
 import { BANNERS, getActiveAd } from '../../services/adsStorage.js'
 import { showsAds } from '../../utils/userHelpers.js'
+import { usePlayer } from '../../context/PlayerContext.jsx'
 import MusicPlayer from '../player/MusicPlayer.jsx'
+
 
 export default function MainLayout() {
   const { user } = useAuth()
+  const { currentSong } = usePlayer()
   const navItems = navigationByRole[user?.role] ?? []
   const adsVisible = showsAds(user)
   const bottomAd = adsVisible ? getActiveAd(BANNERS.INFERIOR) : null
   const rightAd = adsVisible ? getActiveAd(BANNERS.DERECHO) : null
   
+  const hasPlayer = Boolean(currentSong)
+  const bottomSpace = (hasPlayer ? 88 : 0) + (bottomAd ? 72 : 0) + 24
   return (
     <div className="min-h-screen bg-canvas text-white">
       <aside className="fixed inset-y-0 left-0 z-20 hidden w-[252px] border-r border-line bg-[#101215] px-5 py-7 md:flex md:flex-col">
@@ -59,7 +64,7 @@ export default function MainLayout() {
         </p>
       </aside>
 
-      <div className={`${bottomAd ? 'pb-[200px]' : 'pb-[110px]'} md:ml-[252px]`}>
+      <div className="md:ml-[252px]" style={{ paddingBottom: bottomSpace }}>
         <header className="sticky top-0 z-10 flex h-[82px] items-center border-b border-line bg-canvas/90 px-5 backdrop-blur-xl sm:px-8">
           <label className="relative block w-full max-w-[520px]">
             <Search
@@ -98,7 +103,7 @@ export default function MainLayout() {
       {bottomAd && (
         <div
           aria-label="Anuncio"
-          className="fixed inset-x-0 bottom-[88px] z-20 h-[72px] border-t border-line bg-[#0D0F12] px-4 py-2 md:left-[252px]"
+          className={`fixed inset-x-0 ${hasPlayer ? 'bottom-[88px]' : 'bottom-0'} z-20 h-[72px] border-t border-line bg-[#0D0F12] px-4 py-2 md:left-[252px]`}
         >
           <AdBanner ad={bottomAd} />
         </div>
