@@ -1,12 +1,6 @@
 import {
   Disc3,
-  Play,
-  Repeat,
   Search,
-  Shuffle,
-  SkipBack,
-  SkipForward,
-  Volume2,
 } from 'lucide-react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { navigationByRole } from '../../config/navigation.js'

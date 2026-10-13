@@ -1,9 +1,11 @@
 // src/context/PlayerContext.jsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext.jsx';
 
 const PlayerContext = createContext();
 
 export const PlayerProvider = ({ children }) => {
+  const { user } = useAuth();
   const [currentSong, setCurrentSong] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -26,7 +28,23 @@ export const PlayerProvider = ({ children }) => {
     }
   };
 
-  // 3. Simulación de la barra de progreso (avanza 1 segundo cada 1000ms)
+  // 3. Mover la canción a un segundo puntual (al hacer click o arrastrar la barra)
+  const seek = (seconds) => {
+    if (!currentSong) return;
+    const limited = Math.min(Math.max(Math.floor(seconds), 0), currentSong.duration);
+    setCurrentTime(limited);
+  };
+
+  // 4. Al cerrar sesión se detiene la música y se limpia el reproductor
+     useEffect(() => {
+       if (!user) {
+         setCurrentSong(null);
+         setIsPlaying(false);
+         setCurrentTime(0);
+       }
+     }, [user]);
+
+  // 5. Simulación de la barra de progreso (avanza 1 segundo cada 1000ms)
   useEffect(() => {
     let interval = null;
     if (isPlaying && currentSong) {
@@ -53,6 +71,7 @@ export const PlayerProvider = ({ children }) => {
         currentTime,
         playSong,
         togglePlay,
+        seek,
       }}
     >
       {children}
