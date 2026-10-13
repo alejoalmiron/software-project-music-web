@@ -1,7 +1,8 @@
+import { useSearchParams } from 'react-router-dom'
 import { LogOut, Music2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { usePlayer } from '../context/PlayerContext.jsx'
-import { GENRES, getSongsByGenre } from '../data/songs.js'
+import { GENRES, getSongsByGenre, songs } from '../data/songs.js'
 
 const recommendations = GENRES.map((genre) => ({
   genre,
@@ -10,7 +11,22 @@ const recommendations = GENRES.map((genre) => ({
 
 export default function Dashboard() {
   const { user, logout } = useAuth()
-  const { playSong } = usePlayer() 
+  const { playSong } = usePlayer()
+
+  const [searchParams, setSearchParams] = useSearchParams()
+  const searchQuery = searchParams.get('search')?.trim() || ''
+  const hasSearched = Boolean(searchQuery)
+
+  // Filtrado de canciones por título
+  const searchResults = hasSearched
+    ? songs.filter((song) =>
+        song.title.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : []
+
+  const handleClearSearch = () => {
+    setSearchParams({})
+  }
 
   return (
     <div>
@@ -34,24 +50,38 @@ export default function Dashboard() {
         </button>
       </section>
 
-      <div className="space-y-10">
-        {recommendations.map((section) => (
-          <section key={section.genre}>
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-display text-xl font-bold">
-                Recomendaciones <span className="text-[#858B93]">·</span>{' '}
-                {section.genre}
-              </h2>
-              <button className="text-xs font-semibold text-[#858B93] transition hover:text-white">
-                Ver todo
-              </button>
+      {/* Si hay búsqueda activa: mostramos resultados o estado vacío */}
+      {hasSearched ? (
+        <section>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="font-display text-xl font-bold">
+              Resultados de la búsqueda: <span className="text-brand">"{searchQuery}"</span>
+            </h2>
+            <button
+              type="button"
+              onClick={handleClearSearch}
+              className="text-xs font-semibold text-[#858B93] transition hover:text-white"
+            >
+              Volver a recomendaciones
+            </button>
+          </div>
+
+          {searchResults.length === 0 ? (
+            <div className="rounded-2xl border border-line bg-surface py-16 text-center">
+              <p className="text-base font-semibold text-white">
+                No encontramos resultados
+              </p>
+              <p className="mt-1 text-xs text-[#858B93]">
+                Prueba con otro título de canción.
+              </p>
             </div>
+          ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
-              {section.songs.map((song) => (
+              {searchResults.map((song) => (
                 <article
                   key={song.id}
-                  onClick={() => playSong(song)} // 2. Agregamos el evento onClick aquí
-                  className="group cursor-pointer rounded-2xl border border-line bg-surface p-3 transition hover:border-[#333A41] hover:bg-[#17191D] sm:p-4" // 3. Agregamos cursor-pointer
+                  onClick={() => playSong(song)}
+                  className="group cursor-pointer rounded-2xl border border-line bg-surface p-3 transition hover:border-[#333A41] hover:bg-[#17191D] sm:p-4"
                 >
                   <div className="relative aspect-square overflow-hidden rounded-xl bg-[#202329]">
                     <img
@@ -70,9 +100,50 @@ export default function Dashboard() {
                 </article>
               ))}
             </div>
-          </section>
-        ))}
-      </div>
+          )}
+        </section>
+      ) : (
+        /* Si no hay búsqueda: mostramos recomendaciones normales */
+        <div className="space-y-10">
+          {recommendations.map((section) => (
+            <section key={section.genre}>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="font-display text-xl font-bold">
+                  Recomendaciones <span className="text-[#858B93]">·</span>{' '}
+                  {section.genre}
+                </h2>
+                <button className="text-xs font-semibold text-[#858B93] transition hover:text-white">
+                  Ver todo
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
+                {section.songs.map((song) => (
+                  <article
+                    key={song.id}
+                    onClick={() => playSong(song)}
+                    className="group cursor-pointer rounded-2xl border border-line bg-surface p-3 transition hover:border-[#333A41] hover:bg-[#17191D] sm:p-4"
+                  >
+                    <div className="relative aspect-square overflow-hidden rounded-xl bg-[#202329]">
+                      <img
+                        src={song.image}
+                        alt={`Carátula de ${song.title}`}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent opacity-0 transition group-hover:opacity-100" />
+                      <span className="absolute bottom-3 right-3 flex h-10 w-10 translate-y-2 items-center justify-center rounded-full bg-brand text-[#07130b] opacity-0 shadow-lg transition group-hover:translate-y-0 group-hover:opacity-100">
+                        <Music2 size={18} fill="currentColor" />
+                      </span>
+                    </div>
+                    <h3 className="mt-3 truncate text-sm font-semibold">{song.title}</h3>
+                    <p className="mt-1 truncate text-xs text-[#858B93]">{song.artist}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

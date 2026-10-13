@@ -1,8 +1,10 @@
+import { useState, useEffect } from 'react'
 import {
   Disc3,
   Search,
+  X,
 } from 'lucide-react'
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet, useSearchParams, useNavigate } from 'react-router-dom'
 import { navigationByRole } from '../../config/navigation.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import AdBanner from '../ads/AdBanner.jsx'
@@ -11,7 +13,6 @@ import { showsAds } from '../../utils/userHelpers.js'
 import { usePlayer } from '../../context/PlayerContext.jsx'
 import MusicPlayer from '../player/MusicPlayer.jsx'
 
-
 export default function MainLayout() {
   const { user } = useAuth()
   const { currentSong } = usePlayer()
@@ -19,9 +20,37 @@ export default function MainLayout() {
   const adsVisible = showsAds(user)
   const bottomAd = adsVisible ? getActiveAd(BANNERS.INFERIOR) : null
   const rightAd = adsVisible ? getActiveAd(BANNERS.DERECHO) : null
-  
+
+  // Manejo de búsqueda en el header
+  const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const queryParam = searchParams.get('search') || ''
+  const [searchInput, setSearchInput] = useState(queryParam)
+
+  useEffect(() => {
+    setSearchInput(queryParam)
+  }, [queryParam])
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      const trimmed = searchInput.trim()
+      if (trimmed) {
+        navigate(`/?search=${encodeURIComponent(trimmed)}`)
+      } else {
+        navigate('/')
+      }
+    }
+  }
+
+  const handleClear = () => {
+    setSearchInput('')
+    navigate('/')
+  }
+
   const hasPlayer = Boolean(currentSong)
   const bottomSpace = (hasPlayer ? 88 : 0) + (bottomAd ? 72 : 0) + 24
+
   return (
     <div className="min-h-screen bg-canvas text-white">
       <aside className="fixed inset-y-0 left-0 z-20 hidden w-[252px] border-r border-line bg-[#101215] px-5 py-7 md:flex md:flex-col">
@@ -60,18 +89,31 @@ export default function MainLayout() {
 
       <div className="md:ml-[252px]" style={{ paddingBottom: bottomSpace }}>
         <header className="sticky top-0 z-10 flex h-[82px] items-center border-b border-line bg-canvas/90 px-5 backdrop-blur-xl sm:px-8">
-          <label className="relative block w-full max-w-[520px]">
+          <div className="relative w-full max-w-[520px]">
             <Search
               size={18}
               className="absolute left-4 top-1/2 -translate-y-1/2 text-[#777E87]"
             />
             <input
-              type="search"
-              placeholder="Buscar canciones..."
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Buscar canciones... (presiona Enter)"
               aria-label="Buscar canciones"
-              className="w-full rounded-full border border-line bg-[#15181C] py-3 pl-11 pr-5 text-sm text-white outline-none transition placeholder:text-[#737982] focus:border-[#3B454D]"
+              className="w-full rounded-full border border-line bg-[#15181C] py-3 pl-11 pr-10 text-sm text-white outline-none transition placeholder:text-[#737982] focus:border-[#3B454D]"
             />
-          </label>
+            {searchInput && (
+              <button
+                type="button"
+                onClick={handleClear}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#777E87] hover:text-white"
+                aria-label="Limpiar búsqueda"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
           <div className="ml-auto hidden items-center gap-2 text-xs text-[#858B93] sm:flex">
             <span className="h-2 w-2 rounded-full bg-brand" />
             Escuchá lo que te gusta
@@ -91,9 +133,8 @@ export default function MainLayout() {
             </aside>
           )}
         </div>
-        
       </div>
-      
+
       {bottomAd && (
         <div
           aria-label="Anuncio"

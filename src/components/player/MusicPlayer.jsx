@@ -1,11 +1,51 @@
 // src/components/player/MusicPlayer.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { usePlayer } from '../../context/PlayerContext.jsx';
-import { Play, Pause } from 'lucide-react';
+import { Play, Pause, MoreVertical, Plus, Check, ListMusic } from 'lucide-react';
+import { getPlaylists, addSongToPlaylist } from '../../services/playlistStorage.js';
 
 export default function MusicPlayer() {
   const { currentSong, isPlaying, togglePlay, currentTime, seek } = usePlayer();
   const [dragging, setDragging] = useState(false);
+
+  // Estados para el menú de opciones (3 puntitos)
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [playlists, setPlaylists] = useState([]);
+  const [addedMessage, setAddedMessage] = useState('');
+  const menuRef = useRef(null);
+
+  // Cargar playlists cada vez que se abre el menú
+  const handleToggleMenu = () => {
+    if (!menuOpen) {
+      setPlaylists(getPlaylists());
+    }
+    setMenuOpen((prev) => !prev);
+  };
+
+  // Cerrar menú al hacer click afuera
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    if (menuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [menuOpen]);
+
+  // Manejar adición de la canción activa a la playlist seleccionada
+  const handleSelectPlaylist = (playlistId, playlistName) => {
+    addSongToPlaylist(playlistId, currentSong);
+    setAddedMessage(`Agregada a ${playlistName}`);
+    setTimeout(() => {
+      setAddedMessage('');
+      setMenuOpen(false);
+    }, 1200);
+  };
 
   // Si no hay canción seleccionada, no se muestra nada
   if (!currentSong) return null;
@@ -21,7 +61,7 @@ export default function MusicPlayer() {
     ? (currentTime / currentSong.duration) * 100 
     : 0;
   
-     // Calcula el segundo según dónde se hizo click (o se arrastró) sobre la barra
+  // Calcula el segundo según dónde se hizo click (o se arrastró) sobre la barra
   const seekFromEvent = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const ratio = (e.clientX - rect.left) / rect.width;
@@ -71,7 +111,6 @@ export default function MusicPlayer() {
         </button>
 
         {/* Barra de progreso animada */}
-        
         <div className="flex w-full items-center gap-3 text-xs text-[#858B93]">
           <span>{formatTime(currentTime)}</span>
           <div
@@ -97,9 +136,63 @@ export default function MusicPlayer() {
         </div>
       </div>
 
-      <div className="hidden w-1/4 sm:block"></div>
+      {/* Lado derecho: botón de 3 puntitos y popover */}
+      <div className="relative flex w-1/4 items-center justify-end pr-2" ref={menuRef}>
+        <button
+          type="button"
+          onClick={handleToggleMenu}
+          title="Opciones de la canción"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-[#858B93] transition hover:bg-white/10 hover:text-white active:scale-95"
+        >
+          <MoreVertical size={18} />
+        </button>
+
+        {/* Popover desplegable hacia arriba */}
+        {menuOpen && (
+          <div className="absolute bottom-12 right-2 z-50 w-64 rounded-2xl border border-line bg-[#16191F] p-2.5 shadow-2xl">
+            <p className="px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-[#858B93]">
+              Agregar a playlist
+            </p>
+
+            {addedMessage ? (
+              <div className="flex items-center gap-2 rounded-xl bg-brand/10 px-3 py-2 text-xs font-semibold text-brand">
+                <Check size={14} />
+                <span>{addedMessage}</span>
+              </div>
+            ) : playlists.length === 0 ? (
+              <p className="px-2 py-3 text-center text-xs text-[#737982]">
+                No tienes playlists creadas.
+              </p>
+            ) : (
+              <div className="mt-1 max-h-48 overflow-y-auto space-y-1">
+                {playlists.map((playlist) => {
+                  const alreadyInPlaylist = playlist.songs?.some((s) => s.id === currentSong.id);
+
+                  return (
+                    <button
+                      key={playlist.id}
+                      type="button"
+                      onClick={() => handleSelectPlaylist(playlist.id, playlist.name)}
+                      className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs transition hover:bg-white/5"
+                    >
+                      <div className="flex items-center gap-2.5 truncate">
+                        <ListMusic size={15} className="shrink-0 text-brand" />
+                        <span className="truncate text-white font-medium">{playlist.name}</span>
+                      </div>
+                      {alreadyInPlaylist ? (
+                        <Check size={14} className="shrink-0 text-brand" />
+                      ) : (
+                        <Plus size={14} className="shrink-0 text-[#858B93]" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }
-//componente visual de la barra de reproduccion q va aparecer abajo de todo
-//en la pantalla cuandoo se toca la cancion
