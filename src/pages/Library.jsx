@@ -10,6 +10,7 @@ import {
 import {
   getPlaylists,
   createPlaylist,
+  PLAYLISTS_CHANGED_EVENT,
 } from '../services/playlistStorage.js'
 import { usePlayer } from '../context/PlayerContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -26,6 +27,12 @@ export default function Library() {
 
     useEffect(() => {
     setPlaylists(getPlaylists(user?.id))
+  }, [user?.id])
+
+  useEffect(() => {
+    const refresh = () => setPlaylists(getPlaylists(user?.id))
+    window.addEventListener(PLAYLISTS_CHANGED_EVENT, refresh)
+    return () => window.removeEventListener(PLAYLISTS_CHANGED_EVENT, refresh)
   }, [user?.id])
 
   const currentPlaylist = playlists.find((p) => p.id === selectedPlaylistId)

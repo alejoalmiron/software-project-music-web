@@ -1,5 +1,7 @@
 const PLAYLISTS_STORAGE_KEY = 'soundwave_playlists'
 
+export const PLAYLISTS_CHANGED_EVENT = 'soundwave:playlists-changed'
+
 // Lee TODAS las playlists guardadas (de todos los usuarios). Uso interno.
 function readAllPlaylists() {
   try {
@@ -20,6 +22,7 @@ export function getPlaylists(userId) {
 export function savePlaylists(playlists) {
   try {
     localStorage.setItem(PLAYLISTS_STORAGE_KEY, JSON.stringify(playlists))
+    window.dispatchEvent(new Event(PLAYLISTS_CHANGED_EVENT))
   } catch (error) {
     console.error('Error al guardar playlists en localStorage:', error)
   }
