@@ -35,14 +35,14 @@ export const PlayerProvider = ({ children }) => {
     setCurrentTime(limited);
   };
 
-  // 4. Al cerrar sesión se detiene la música y se limpia el reproductor
-     useEffect(() => {
-       if (!user) {
-         setCurrentSong(null);
-         setIsPlaying(false);
-         setCurrentTime(0);
-       }
-     }, [user]);
+// 4. Al cerrar sesión se detiene la música y se limpia el reproductor
+  useEffect(() => {
+    if (!user)  {  
+      setCurrentSong(null);   
+      setIsPlaying(false);   
+      setCurrentTime(0);   
+      } 
+    }, [user]);      
 
   // 5. Simulación de la barra de progreso (avanza 1 segundo cada 1000ms)
   useEffect(() => {

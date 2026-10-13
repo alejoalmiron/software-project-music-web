@@ -1,5 +1,5 @@
 // src/components/player/MusicPlayer.jsx
-import React, { useState } from 'react';;
+import React, { useState } from 'react';
 import { usePlayer } from '../../context/PlayerContext.jsx';
 import { Play, Pause } from 'lucide-react';
 
