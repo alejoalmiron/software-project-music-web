@@ -7,6 +7,6 @@ const anuncios = { label: 'Gestionar anuncios', to: '/admin/anuncios', icon: Meg
 
 export const navigationByRole = {
   [ROLES.OYENTE]: [inicio, biblioteca],
-  [ROLES.PUBLICADOR]: [inicio],
+  [ROLES.PUBLICADOR]: [inicio, biblioteca],
   [ROLES.ADMIN]: [inicio, anuncios,biblioteca],
 }

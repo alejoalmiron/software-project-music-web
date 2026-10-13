@@ -41,8 +41,15 @@ export default function MusicPlayer() {
 
   // Manejar adición de la canción activa a la playlist seleccionada
   const handleSelectPlaylist = (playlistId, playlistName) => {
-    addSongToPlaylist(playlistId, currentSong, user?.id);
-    setAddedMessage(`Agregada a ${playlistName}`);
+      const playlist = playlists.find((pl) => pl.id === playlistId);
+      const alreadyInPlaylist = playlist?.songs?.some((s) => s.id === currentSong.id);
+
+      if (alreadyInPlaylist) {
+       setAddedMessage(`Ya estaba en ${playlistName}`);
+     } else {
+       addSongToPlaylist(playlistId, currentSong, user?.id);
+       setAddedMessage(`Agregada a ${playlistName}`);
+             }
     setTimeout(() => {
       setAddedMessage('');
       setMenuOpen(false);
