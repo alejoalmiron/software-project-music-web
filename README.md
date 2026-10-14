@@ -63,6 +63,14 @@ El equipo está conformado por cinco integrantes:
 - **Marcos:** banners publicitarios e interrupciones para usuarios Free (US-07).
 - **Martín:** vistas de planes Premium y formulario de pago con tarjeta (US-08, US-09).
 
+## Gestión de cuenta y planes
+
+Los oyentes pueden abrir **Gestión de cuenta** desde el menú lateral para consultar su plan y
+comparar Free con Premium según anuncios, precio y duración. El precio mostrado para Premium
+(ARS 2.999 por 30 días) es ilustrativo. Un oyente Free puede elegir Premium y completar un
+formulario de tarjeta de prueba; al confirmar, el plan se activa por 30 días y se ocultan los
+anuncios. Si el oyente ya tiene Premium activo, se muestra la fecha de vencimiento y los días
+restantes, sin ofrecer otra contratación.
 
 ## Gestión de anuncios en banners
 

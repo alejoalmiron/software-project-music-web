@@ -1,12 +1,13 @@
 import { createContext, useContext, useMemo, useState } from 'react'
 import { seedUsers } from '../data/users.js'
-import { FREE_PLAN, ROLES, normalizeUser } from '../utils/userHelpers.js'
+import { FREE_PLAN, PLANS, ROLES, normalizeUser } from '../utils/userHelpers.js'
 
 const AuthContext = createContext(null)
 
 const SESSION_KEY = 'soundwave.session'
 const USERS_KEY = 'soundwave.users'
 const REGISTRABLE_ROLES = new Set([ROLES.OYENTE, ROLES.PUBLICADOR])
+const PREMIUM_TRIAL_MAX_DAYS = 60
 
 function readStoredUsers() {
   const saved = localStorage.getItem(USERS_KEY)
@@ -26,7 +27,24 @@ function readUsers() {
   const missingSeeds = seedUsers.filter(
     (seed) => !stored.some((account) => account.id === seed.id),
   )
-  const users = [...missingSeeds, ...stored]
+  const users = [
+    ...missingSeeds,
+    ...stored.map((account) => {
+      const seed = seedUsers.find((candidate) => candidate.id === account.id)
+      if (
+        account.id === 'premium-prueba' &&
+        account.plan?.type === PLANS.PREMIUM &&
+        seed?.plan?.type === PLANS.PREMIUM
+      ) {
+        const daysUntilExpiry =
+          (new Date(account.plan.expiresAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000)
+        if (daysUntilExpiry > PREMIUM_TRIAL_MAX_DAYS) {
+          return { ...account, plan: seed.plan }
+        }
+      }
+      return account
+    }),
+  ]
   localStorage.setItem(USERS_KEY, JSON.stringify(users))
   return users
 }
@@ -99,7 +117,7 @@ export function AuthProvider({ children }) {
     return startSession(account)
   }
 
-  // Solo para oyentes. Se usará al pagar Premium (30 días vía expiresAt).
+  // Solo para oyentes. Premium se activa con fecha de vencimiento.
   function updatePlan(plan) {
     if (!user || user.role !== ROLES.OYENTE) {
       throw new Error('Solo los oyentes pueden cambiar de plan.')
