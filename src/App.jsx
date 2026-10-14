@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext.jsx'
 import { PlayerProvider } from './context/PlayerContext.jsx'
 import AdminAds from './pages/AdminAds.jsx'
 import Dashboard from './pages/Dashboard.jsx'
+import Account from './pages/Account.jsx'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import ProtectedRoute from './routes/ProtectedRoute.jsx'
@@ -28,6 +29,9 @@ export default function App() {
               <Route element={<MainLayout />}>
                 <Route index element={<Dashboard />} />
                 <Route path="library" element={<Library />} />
+                <Route element={<ProtectedRoute roles={[ROLES.OYENTE]} />}>
+                  <Route path="account" element={<Account />} />
+                </Route>
 
                 {/* Rutas exclusivas para Admin */}
                 <Route element={<ProtectedRoute roles={[ROLES.ADMIN]} />}>

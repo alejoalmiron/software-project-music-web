@@ -1,5 +1,7 @@
 // Usuarios precargados.
 // El resto de las cuentas se crean desde "Crear cuenta" y se guardan en localStorage.
+const premiumExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+
 export const seedUsers = [
   {
     id: 'admin-soundwave',
@@ -16,6 +18,6 @@ export const seedUsers = [
     email: 'premium@soundwave.com',
     password: 'premium123',
     role: 'oyente',
-    plan: { type: 'premium', expiresAt: '2099-12-31T00:00:00.000Z' },
+    plan: { type: 'premium', expiresAt: premiumExpiresAt.toISOString() },
   },
 ]
