@@ -72,7 +72,7 @@ export const PlayerProvider = ({ children }) => {
   // 3. Mover la canción a un segundo puntual (al hacer click o arrastrar la barra)
   const seek = (seconds) => {
     if (!currentSong) return;
-    const limited = Math.min(Math.max(Math.floor(seconds), 0), currentSong.duration);
+    const limited = Math.min(Math.max(Math.floor(seconds), 0), currentSong.duration - 1);
     setCurrentTime(limited);
   };
 
