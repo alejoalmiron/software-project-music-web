@@ -2,11 +2,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { usePlayer } from '../../context/PlayerContext.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { Play, Pause, MoreVertical, Plus, Check, ListMusic } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, MoreVertical, Plus, Check, ListMusic } from 'lucide-react';
 import { getPlaylists, addSongToPlaylist } from '../../services/playlistStorage.js';
 
 export default function MusicPlayer() {
-  const { currentSong, isPlaying, togglePlay, currentTime, seek } = usePlayer();
+  const {
+    currentSong, isPlaying, togglePlay, currentTime, seek,
+    playNext, playPrevious, hasNext, hasPrevious,
+  } = usePlayer();
   const { user } = useAuth();
   const [dragging, setDragging] = useState(false);
 
@@ -45,11 +48,11 @@ export default function MusicPlayer() {
       const alreadyInPlaylist = playlist?.songs?.some((s) => s.id === currentSong.id);
 
       if (alreadyInPlaylist) {
-       setAddedMessage(`Ya estaba en ${playlistName}`);
-     } else {
-       addSongToPlaylist(playlistId, currentSong, user?.id);
-       setAddedMessage(`Agregada a ${playlistName}`);
-             }
+      setAddedMessage(`Ya estaba en ${playlistName}`);
+    } else {
+      addSongToPlaylist(playlistId, currentSong, user?.id);
+      setAddedMessage(`Agregada a ${playlistName}`);
+            }
     setTimeout(() => {
       setAddedMessage('');
       setMenuOpen(false);
@@ -107,17 +110,39 @@ export default function MusicPlayer() {
 
       {/* Control de Play/Pausa y Barra de progreso */}
       <div className="flex w-2/4 max-w-md flex-col items-center gap-2">
-        <button
-          onClick={togglePlay}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black transition hover:scale-105 active:scale-95"
-          title={isPlaying ? 'Pausar' : 'Reproducir'}
-        >
-          {isPlaying ? (
-            <Pause size={18} fill="currentColor" />
-          ) : (
-            <Play size={18} fill="currentColor" className="ml-0.5" />
-          )}
-        </button>
+          <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={playPrevious}
+            disabled={!hasPrevious}
+            className="flex h-8 w-8 items-center justify-center rounded-full text-[#858B93] transition hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:text-[#858B93]"
+            title="Anterior"
+          >
+            <SkipBack size={18} fill="currentColor" />
+          </button>
+
+          <button
+            onClick={togglePlay}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black transition hover:scale-105 active:scale-95"
+            title={isPlaying ? 'Pausar' : 'Reproducir'}
+          >
+            {isPlaying ? (
+              <Pause size={18} fill="currentColor" />
+            ) : (
+              <Play size={18} fill="currentColor" className="ml-0.5" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={playNext}
+            disabled={!hasNext}
+            className="flex h-8 w-8 items-center justify-center rounded-full text-[#858B93] transition hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:text-[#858B93]"
+            title="Siguiente"
+          >
+            <SkipForward size={18} fill="currentColor" />
+          </button>
+        </div>
 
         {/* Barra de progreso animada */}
         <div className="flex w-full items-center gap-3 text-xs text-[#858B93]">

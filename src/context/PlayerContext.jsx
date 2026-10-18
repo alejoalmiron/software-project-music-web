@@ -53,6 +53,22 @@ export const PlayerProvider = ({ children }) => {
     }
   };
 
+   // Volver a la canción anterior de la cola
+  const playPrevious = () => {
+    const index = queue.findIndex((s) => s.id === currentSong?.id);
+    const previous = index > 0 ? queue[index - 1] : null;
+    if (previous) {
+      setCurrentSong(previous);
+      setIsPlaying(true);
+      setCurrentTime(0);
+    }
+  };
+
+  // Indican si hay canción anterior / siguiente (habilitan o deshabilitan los botones del reproductor)
+  const currentIndex = queue.findIndex((s) => s.id === currentSong?.id);
+  const hasPrevious = currentIndex > 0;
+  const hasNext = currentIndex >= 0 && currentIndex < queue.length - 1; 
+
   // 3. Mover la canción a un segundo puntual (al hacer click o arrastrar la barra)
   const seek = (seconds) => {
     if (!currentSong) return;
@@ -98,6 +114,10 @@ export const PlayerProvider = ({ children }) => {
         queue,
         playSong,
         playList,
+        playNext,
+        playPrevious,
+        hasNext,
+        hasPrevious,
         togglePlay,
         seek,
       }}
