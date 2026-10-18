@@ -30,7 +30,16 @@ export const PlayerProvider = ({ children }) => {
     }
   };
 
-    // Pasar a la siguiente canción de la cola. Si no hay más, se detiene.
+  // Reproducir una lista completa desde su primera canción (ej: botón "Reproducir" de una playlist)
+  const playList = (list) => {
+    if (!list || list.length === 0) return;
+    setQueue(list);
+    setCurrentSong(list[0]);
+    setIsPlaying(true);
+    setCurrentTime(0);
+  };
+
+  // Pasar a la siguiente canción de la cola. Si no hay más, se detiene.
   const playNext = () => {
     const index = queue.findIndex((s) => s.id === currentSong?.id);
     const next = index >= 0 ? queue[index + 1] : null;
@@ -88,6 +97,7 @@ export const PlayerProvider = ({ children }) => {
         currentTime,
         queue,
         playSong,
+        playList,
         togglePlay,
         seek,
       }}

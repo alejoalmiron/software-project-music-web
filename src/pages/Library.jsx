@@ -16,7 +16,7 @@ import { usePlayer } from '../context/PlayerContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 
 export default function Library() {
-  const { playSong } = usePlayer()
+  const { playSong, playList } = usePlayer()
   const { user } = useAuth()
   const [playlists, setPlaylists] = useState([])
   const [selectedPlaylistId, setSelectedPlaylistId] = useState(null)
@@ -24,6 +24,7 @@ export default function Library() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [playlistName, setPlaylistName] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+  const [playNotice, setPlayNotice] = useState('')
 
     useEffect(() => {
     setPlaylists(getPlaylists(user?.id))
@@ -65,6 +66,17 @@ export default function Library() {
     }
   }
 
+   // Botón "Reproducir": suena la playlist completa desde la primera canción
+  const handlePlayPlaylist = () => {
+    const songsToPlay = currentPlaylist?.songs || []
+    if (songsToPlay.length === 0) {
+      setPlayNotice('Esta playlist no tiene canciones')
+      setTimeout(() => setPlayNotice(''), 2500)
+      return
+    }
+    playList(songsToPlay)
+  } 
+
   // Vista de detalle de la playlist seleccionada
   if (currentPlaylist) {
     const playlistSongs = currentPlaylist.songs || []
@@ -95,6 +107,22 @@ export default function Library() {
             <p className="mt-2 text-xs text-[#858B93]">
               {playlistSongs.length} {playlistSongs.length === 1 ? 'canción' : 'canciones'}
             </p>
+
+            <button
+              type="button"
+              onClick={handlePlayPlaylist}
+              className="mt-4 inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-xs font-bold text-[#07130b] transition hover:brightness-110 active:scale-95"
+            >
+              <Play size={16} fill="currentColor" />
+              Reproducir
+            </button>
+
+            {playNotice && (
+              <p className="mt-3 flex items-center gap-1.5 text-xs text-red-400">
+                <AlertCircle size={14} />
+                {playNotice}
+              </p>
+            )}
           </div>
         </section>
 
