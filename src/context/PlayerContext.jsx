@@ -1,26 +1,39 @@
 // src/context/PlayerContext.jsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext.jsx';
+import { songs } from '../data/songs.js'; // Importación de datos para la Inception del mismo género
 
 const PlayerContext = createContext();
 
 export const PlayerProvider = ({ children }) => {
   const { user } = useAuth();
- const [currentSong, setCurrentSong] = useState(null);
+  const [currentSong, setCurrentSong] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [queue, setQueue] = useState([]); // canciones de la lista que se está escuchando (ej: la playlist)
 
-
+  // Reproducir una canción individual (Si viene de una playlist conserva esa lista, si es suelta genera por género)
   const playSong = (song, list = []) => {
-    setQueue(list);
     if (currentSong?.id === song.id) {
       setIsPlaying(!isPlaying);
-    } else {
-      setCurrentSong(song);
-      setIsPlaying(true);
-      setCurrentTime(0);
+      return;
     }
+
+    if (list && list.length > 0) {
+      // Si viene con una lista/playlist (ej: click en un tema dentro de la playlist), respeta exactamente esa lista
+      setQueue(list);
+    } else {
+      // Criterio Lean Inception 2: Si es una canción suelta (Inicio/Buscador), genera la cola con las del mismo género
+      const currentGenre = song.genre?.trim().toLowerCase();
+      const sameGenreSongs = songs.filter(
+        (s) => s.id !== song.id && s.genre?.trim().toLowerCase() === currentGenre
+      );
+      setQueue([song, ...sameGenreSongs]);
+    }
+
+    setCurrentSong(song);
+    setIsPlaying(true);
+    setCurrentTime(0);
   };
 
   // 2. Alternar entre Play y Pausa
@@ -30,30 +43,35 @@ export const PlayerProvider = ({ children }) => {
     }
   };
 
-  // Reproducir una lista completa desde su primera canción (ej: botón "Reproducir" de una playlist)
+  // Reproducir una playlist desde su botón "Reproducir"
   const playList = (list) => {
     if (!list || list.length === 0) return;
+    // Mantiene en orden EXACTO las canciones de la playlist
     setQueue(list);
     setCurrentSong(list[0]);
     setIsPlaying(true);
     setCurrentTime(0);
   };
 
-  // Pasar a la siguiente canción de la cola. Si no hay más, se detiene.
+  // Pasar a la siguiente canción de la cola.
   const playNext = () => {
-    const index = queue.findIndex((s) => s.id === currentSong?.id);
-    const next = index >= 0 ? queue[index + 1] : null;
+    if (!currentSong) return;
+
+    const index = queue.findIndex((s) => s.id === currentSong.id);
+    const next = index >= 0 && index < queue.length - 1 ? queue[index + 1] : null;
+
     if (next) {
       setCurrentSong(next);
       setIsPlaying(true);
       setCurrentTime(0);
     } else {
+      // Criterio Lean Inception 2: Si no hay otra canción en la cola (ej: terminó la playlist), la reproducción se detiene
       setIsPlaying(false);
       setCurrentTime(0);
     }
   };
 
-   // Volver a la canción anterior de la cola
+  // Volver a la canción anterior de la cola
   const playPrevious = () => {
     const index = queue.findIndex((s) => s.id === currentSong?.id);
     const previous = index > 0 ? queue[index - 1] : null;
@@ -67,7 +85,7 @@ export const PlayerProvider = ({ children }) => {
   // Indican si hay canción anterior / siguiente (habilitan o deshabilitan los botones del reproductor)
   const currentIndex = queue.findIndex((s) => s.id === currentSong?.id);
   const hasPrevious = currentIndex > 0;
-  const hasNext = currentIndex >= 0 && currentIndex < queue.length - 1; 
+  const hasNext = currentIndex >= 0 && currentIndex < queue.length - 1;
 
   // 3. Mover la canción a un segundo puntual (al hacer click o arrastrar la barra)
   const seek = (seconds) => {
@@ -76,20 +94,20 @@ export const PlayerProvider = ({ children }) => {
     setCurrentTime(limited);
   };
 
-// 4. Al cerrar sesión se detiene la música y se limpia el reproductor
+  // 4. Al cerrar sesión se detiene la música y se limpia el reproductor
   useEffect(() => {
-    if (!user)  {  
+    if (!user) {  
       setCurrentSong(null);   
       setIsPlaying(false);   
       setCurrentTime(0);   
-      } 
-    }, [user]);      
+    } 
+  }, [user]);      
 
   // 5. Simulación de la barra de progreso (avanza 1 segundo cada 1000ms)
   useEffect(() => {
     let interval = null;
     if (isPlaying && currentSong) {
-            interval = setInterval(() => {
+      interval = setInterval(() => {
         setCurrentTime((prevTime) => prevTime + 1);
       }, 1000);
     } else {
@@ -134,4 +152,4 @@ export const usePlayer = () => {
   }
   return context;
 };
-//sirve para q cualquier parte de la pag sepa q cancion se esta escuchando 
+//sirve para q cualquier parte de la pag sepa q cancion se esta escuchando

@@ -2,57 +2,71 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { usePlayer } from '../../context/PlayerContext.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { Play, Pause, SkipBack, SkipForward, MoreVertical, Plus, Check, ListMusic } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, MoreVertical, Plus, Check, ListMusic, Music } from 'lucide-react';
 import { getPlaylists, addSongToPlaylist } from '../../services/playlistStorage.js';
 
 export default function MusicPlayer() {
   const {
     currentSong, isPlaying, togglePlay, currentTime, seek,
-    playNext, playPrevious, hasNext, hasPrevious,
+    playNext, playPrevious, hasNext, hasPrevious, queue
   } = usePlayer();
   const { user } = useAuth();
   const [dragging, setDragging] = useState(false);
 
   // Estados para el menú de opciones (3 puntitos)
   const [menuOpen, setMenuOpen] = useState(false);
+  // Estado para la ventana flotante de la cola de reproducción
+  const [queueOpen, setQueueOpen] = useState(false);
   const [playlists, setPlaylists] = useState([]);
   const [addedMessage, setAddedMessage] = useState('');
+  
   const menuRef = useRef(null);
+  const queueRef = useRef(null);
 
   // Cargar playlists cada vez que se abre el menú
   const handleToggleMenu = () => {
     if (!menuOpen) {
       setPlaylists(getPlaylists(user?.id));
+      setQueueOpen(false);
     }
     setMenuOpen((prev) => !prev);
   };
 
-  // Cerrar menú al hacer click afuera
+  // Alternar visibilidad de la cola de reproducción
+  const handleToggleQueue = () => {
+    if (!queueOpen) setMenuOpen(false);
+    setQueueOpen((prev) => !prev);
+  };
+
+  // Cerrar menú o lista de reproducción al hacer click afuera
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
         setMenuOpen(false);
       }
+      if (queueRef.current && !queueRef.current.contains(e.target)) {
+        setQueueOpen(false);
+      }
     };
-    if (menuOpen) {
+    if (menuOpen || queueOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [menuOpen]);
+  }, [menuOpen, queueOpen]);
 
   // Manejar adición de la canción activa a la playlist seleccionada
   const handleSelectPlaylist = (playlistId, playlistName) => {
-      const playlist = playlists.find((pl) => pl.id === playlistId);
-      const alreadyInPlaylist = playlist?.songs?.some((s) => s.id === currentSong.id);
+    const playlist = playlists.find((pl) => pl.id === playlistId);
+    const alreadyInPlaylist = playlist?.songs?.some((s) => s.id === currentSong.id);
 
-      if (alreadyInPlaylist) {
+    if (alreadyInPlaylist) {
       setAddedMessage(`Ya estaba en ${playlistName}`);
     } else {
       addSongToPlaylist(playlistId, currentSong, user?.id);
       setAddedMessage(`Agregada a ${playlistName}`);
-            }
+    }
     setTimeout(() => {
       setAddedMessage('');
       setMenuOpen(false);
@@ -72,7 +86,7 @@ export default function MusicPlayer() {
   const progressPercent = currentSong.duration 
     ? (currentTime / currentSong.duration) * 100 
     : 0;
-  
+
   // Calcula el segundo según dónde se hizo click (o se arrastró) sobre la barra
   const seekFromEvent = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -92,15 +106,81 @@ export default function MusicPlayer() {
 
   const handlePointerUp = () => setDragging(false); 
 
+  // Lean Inception 1: Filtrar la lista de reproducción para obtener las canciones siguientes
+  const currentIdx = queue.findIndex((s) => s.id === currentSong.id);
+  const upcomingSongs = currentIdx >= 0 ? queue.slice(currentIdx + 1) : [];
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 h-[88px] flex items-center justify-between border-t border-line bg-[#121418] px-4 py-3 text-white shadow-lg md:left-[252px]">
       
-      {/* Imagen, Título y Artista de la canción */}
-      <div className="flex w-1/4 items-center gap-3">
+      {/* LADO IZQUIERDO: Botón "Cola" + Información de la canción actual */}
+      <div className="flex w-1/3 items-center gap-3">
+        
+        {/* BOTÓN "COLA" (Lean Inception 1 - Ubicado en la parte izquierda) */}
+        <div className="relative shrink-0" ref={queueRef}>
+          <button
+            type="button"
+            onClick={handleToggleQueue}
+            title="Ver canción actual y próximas"
+            className={`flex items-center gap-1.5 rounded-xl border border-line px-3 py-1.5 text-xs font-medium transition active:scale-95 ${
+              queueOpen ? 'bg-brand text-black border-brand' : 'bg-[#16191F] text-white hover:bg-white/10'
+            }`}
+          >
+            <ListMusic size={16} />
+            <span>Cola</span>
+          </button>
+
+          {/* Popover / Desplegable de la Cola de Reproducción */}
+          {queueOpen && (
+            <div className="absolute bottom-12 left-0 z-50 w-72 rounded-2xl border border-line bg-[#16191F] p-3 shadow-2xl">
+              <p className="px-1 py-1 text-[11px] font-bold uppercase tracking-wider text-[#858B93]">
+                Sonando ahora
+              </p>
+              
+              {/* Canción Actual Resaltada (Criterio de Aceptación Ficha 1) */}
+              <div className="flex items-center gap-2.5 rounded-xl bg-brand/15 border border-brand/40 p-2.5 mb-3 shadow-sm">
+                <img
+                  src={currentSong.image}
+                  alt={currentSong.title}
+                  className="h-10 w-10 rounded-lg object-cover shrink-0"
+                />
+                <div className="truncate">
+                  <p className="text-xs font-bold text-brand truncate">{currentSong.title}</p>
+                  <p className="text-[11px] text-[#858B93] truncate">{currentSong.artist}</p>
+                </div>
+              </div>
+
+              <p className="px-1 py-1 text-[11px] font-bold uppercase tracking-wider text-[#858B93]">
+                A continuación
+              </p>
+              
+              <div className="max-h-44 overflow-y-auto space-y-1">
+                {/* Mensaje exacto cuando no hay más canciones (Criterio de Aceptación Ficha 1) */}
+                {upcomingSongs.length === 0 ? (
+                  <p className="p-3 text-center text-xs font-medium text-[#858B93] bg-white/5 rounded-xl">
+                    No hay más canciones en la cola
+                  </p>
+                ) : (
+                  upcomingSongs.map((song, i) => (
+                    <div key={`${song.id}-${i}`} className="flex items-center justify-between rounded-lg p-2 text-xs hover:bg-white/5">
+                      <div className="truncate pr-2">
+                        <p className="font-medium text-white truncate">{song.title}</p>
+                        <p className="text-[10px] text-[#858B93] truncate">{song.artist}</p>
+                      </div>
+                      <span className="text-[10px] text-[#858B93] shrink-0">{song.genre}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Imagen, Título y Artista de la canción */}
         <img
           src={currentSong.image}
           alt={currentSong.title}
-          className="h-12 w-12 rounded-lg border border-line object-cover"
+          className="h-12 w-12 rounded-lg border border-line object-cover shrink-0"
         />
         <div className="truncate">
           <p className="truncate text-sm font-semibold">{currentSong.title}</p>
@@ -108,9 +188,9 @@ export default function MusicPlayer() {
         </div>
       </div>
 
-      {/* Control de Play/Pausa y Barra de progreso */}
-      <div className="flex w-2/4 max-w-md flex-col items-center gap-2">
-          <div className="flex items-center gap-4">
+      {/* CENTRO: Control de Play/Pausa y Barra de progreso */}
+      <div className="flex w-1/3 max-w-md flex-col items-center gap-2">
+        <div className="flex items-center gap-4">
           <button
             type="button"
             onClick={playPrevious}
@@ -170,8 +250,8 @@ export default function MusicPlayer() {
         </div>
       </div>
 
-      {/* Lado derecho: botón de 3 puntitos y popover */}
-      <div className="relative flex w-1/4 items-center justify-end pr-2" ref={menuRef}>
+      {/* LADO DERECHO: Botón de 3 puntitos (Playlists) */}
+      <div className="relative flex w-1/3 items-center justify-end pr-2" ref={menuRef}>
         <button
           type="button"
           onClick={handleToggleMenu}
@@ -183,7 +263,7 @@ export default function MusicPlayer() {
 
         {/* Popover desplegable hacia arriba */}
         {menuOpen && (
-          <div className="absolute bottom-12 right-2 z-50 w-64 rounded-2xl border border-line bg-[#16191F] p-2.5 shadow-2xl">
+          <div className="absolute bottom-12 right-0 z-50 w-64 rounded-2xl border border-line bg-[#16191F] p-2.5 shadow-2xl">
             <p className="px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-[#858B93]">
               Agregar a playlist
             </p>
