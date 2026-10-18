@@ -113,7 +113,7 @@ export default function Library() {
             {playlistSongs.map((song, index) => (
               <div
                 key={song.id}
-                onClick={() => playSong(song)}
+                onClick={() => playSong(song, playlistSongs)}
                 className="group flex cursor-pointer items-center justify-between p-3.5 transition hover:bg-[#1A1D23] sm:px-5"
               >
                 <div className="flex flex-1 items-center gap-3.5 min-w-0">

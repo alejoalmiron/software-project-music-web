@@ -6,12 +6,14 @@ const PlayerContext = createContext();
 
 export const PlayerProvider = ({ children }) => {
   const { user } = useAuth();
-  const [currentSong, setCurrentSong] = useState(null);
+ const [currentSong, setCurrentSong] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
+  const [queue, setQueue] = useState([]); // canciones de la lista que se está escuchando (ej: la playlist)
 
-  // 1. Al seleccionar una canción, se carga y arranca la reproducción
-  const playSong = (song) => {
+
+  const playSong = (song, list = []) => {
+    setQueue(list);
     if (currentSong?.id === song.id) {
       setIsPlaying(!isPlaying);
     } else {
@@ -25,6 +27,20 @@ export const PlayerProvider = ({ children }) => {
   const togglePlay = () => {
     if (currentSong) {
       setIsPlaying(!isPlaying);
+    }
+  };
+
+    // Pasar a la siguiente canción de la cola. Si no hay más, se detiene.
+  const playNext = () => {
+    const index = queue.findIndex((s) => s.id === currentSong?.id);
+    const next = index >= 0 ? queue[index + 1] : null;
+    if (next) {
+      setCurrentSong(next);
+      setIsPlaying(true);
+      setCurrentTime(0);
+    } else {
+      setIsPlaying(false);
+      setCurrentTime(0);
     }
   };
 
@@ -48,14 +64,8 @@ export const PlayerProvider = ({ children }) => {
   useEffect(() => {
     let interval = null;
     if (isPlaying && currentSong) {
-      interval = setInterval(() => {
-        setCurrentTime((prevTime) => {
-          if (prevTime >= currentSong.duration) {
-            setIsPlaying(false); // Detener al llegar al final
-            return 0;
-          }
-          return prevTime + 1;
-        });
+            interval = setInterval(() => {
+        setCurrentTime((prevTime) => prevTime + 1);
       }, 1000);
     } else {
       clearInterval(interval);
@@ -63,12 +73,20 @@ export const PlayerProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, [isPlaying, currentSong]);
 
+  // 6. Al terminar la canción, suena la siguiente de la cola (o se detiene si era la última)
+  useEffect(() => {
+    if (currentSong && isPlaying && currentTime >= currentSong.duration) {
+      playNext();
+    }
+  }, [currentTime]);
+
   return (
     <PlayerContext.Provider
       value={{
         currentSong,
         isPlaying,
         currentTime,
+        queue,
         playSong,
         togglePlay,
         seek,
