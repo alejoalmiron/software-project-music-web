@@ -13,28 +13,25 @@ export const PlayerProvider = ({ children }) => {
   const [queue, setQueue] = useState([]); // canciones de la lista que se está escuchando (ej: la playlist)
 
   // Reproducir una canción individual (Si viene de una playlist conserva esa lista, si es suelta genera por género)
-  const playSong = (song, list = []) => {
-    if (currentSong?.id === song.id) {
-      setIsPlaying(!isPlaying);
-      return;
-    }
+ // Al tocar una canción (desde donde sea): se arma la cola de ese lugar y la canción suena desde cero.
+// Si se toca la misma canción que ya suena, vuelve a empezar.
+const playSong = (song, list = []) => {
+  if (list && list.length > 0) {
+    // Viene de una lista (ej: playlist): la cola es exactamente esa lista
+    setQueue(list);
+  } else {
+    // Canción suelta (inicio / buscador): la cola es ella + las del mismo género
+    const currentGenre = song.genre?.trim().toLowerCase();
+    const sameGenreSongs = songs.filter(
+      (s) => s.id !== song.id && s.genre?.trim().toLowerCase() === currentGenre
+    );
+    setQueue([song, ...sameGenreSongs]);
+  }
 
-    if (list && list.length > 0) {
-      // Si viene con una lista/playlist (ej: click en un tema dentro de la playlist), respeta exactamente esa lista
-      setQueue(list);
-    } else {
-      // Criterio Lean Inception 2: Si es una canción suelta (Inicio/Buscador), genera la cola con las del mismo género
-      const currentGenre = song.genre?.trim().toLowerCase();
-      const sameGenreSongs = songs.filter(
-        (s) => s.id !== song.id && s.genre?.trim().toLowerCase() === currentGenre
-      );
-      setQueue([song, ...sameGenreSongs]);
-    }
-
-    setCurrentSong(song);
-    setIsPlaying(true);
-    setCurrentTime(0);
-  };
+  setCurrentSong(song);
+  setIsPlaying(true);
+  setCurrentTime(0);
+};
 
   // 2. Alternar entre Play y Pausa
   const togglePlay = () => {
