@@ -6,14 +6,90 @@ import {
   Play,
   Music,
   ArrowLeft,
+  Pencil,
 } from 'lucide-react'
 import {
   getPlaylists,
   createPlaylist,
+  renamePlaylist,
   PLAYLISTS_CHANGED_EVENT,
 } from '../services/playlistStorage.js'
 import { usePlayer } from '../context/PlayerContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
+import FavoriteButton from '../components/songs/FavoriteButton.jsx'
+
+function PlaylistNameModal({
+  isOpen,
+  isRenaming,
+  playlistName,
+  errorMessage,
+  onNameChange,
+  onClose,
+  onSubmit,
+}) {
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="playlist-modal-title"
+        className="w-full max-w-md rounded-2xl border border-line bg-[#121519] p-6 shadow-2xl"
+      >
+        <h2 id="playlist-modal-title" className="font-display text-xl font-bold text-white">
+          {isRenaming ? 'Renombrar playlist' : 'Crear una playlist'}
+        </h2>
+        <p className="mt-1 text-xs text-[#858B93]">
+          {isRenaming
+            ? 'Elegí un nuevo nombre para tu colección musical.'
+            : 'Dale un nombre a tu nueva colección musical.'}
+        </p>
+
+        <form onSubmit={onSubmit} className="mt-5">
+          <label
+            htmlFor="playlistName"
+            className="mb-1.5 block text-xs font-semibold text-[#858B93]"
+          >
+            Nombre de la playlist
+          </label>
+          <input
+            id="playlistName"
+            type="text"
+            value={playlistName}
+            onChange={onNameChange}
+            placeholder="Ej. Rock Clásico, Relax, Favoritas..."
+            autoFocus
+            className="w-full rounded-xl border border-line bg-[#1A1D23] px-4 py-2.5 text-sm text-white placeholder-[#737982] outline-none transition focus:border-brand"
+          />
+
+          {errorMessage && (
+            <div role="alert" className="mt-2.5 flex items-center gap-1.5 text-xs text-red-400">
+              <AlertCircle size={14} />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
+          <div className="mt-6 flex justify-end gap-2.5">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full border border-line px-4 py-2 text-xs font-semibold text-[#A1A7AF] transition hover:text-white"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="rounded-full bg-brand px-5 py-2 text-xs font-bold text-[#07130b] transition hover:brightness-110 active:scale-95"
+            >
+              Confirmar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
 
 export default function Library() {
   const { playSong, playList } = usePlayer()
@@ -22,11 +98,12 @@ export default function Library() {
   const [selectedPlaylistId, setSelectedPlaylistId] = useState(null)
 
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingPlaylistId, setEditingPlaylistId] = useState(null)
   const [playlistName, setPlaylistName] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const [playNotice, setPlayNotice] = useState('')
 
-    useEffect(() => {
+  useEffect(() => {
     setPlaylists(getPlaylists(user?.id))
   }, [user?.id])
 
@@ -40,17 +117,26 @@ export default function Library() {
 
   const handleOpenModal = () => {
     setIsModalOpen(true)
+    setEditingPlaylistId(null)
     setPlaylistName('')
+    setErrorMessage('')
+  }
+
+  const handleOpenRenameModal = (playlist) => {
+    setIsModalOpen(true)
+    setEditingPlaylistId(playlist.id)
+    setPlaylistName(playlist.name)
     setErrorMessage('')
   }
 
   const handleCloseModal = () => {
     setIsModalOpen(false)
+    setEditingPlaylistId(null)
     setPlaylistName('')
     setErrorMessage('')
   }
 
-  const handleCreateSubmit = (e) => {
+  const handleSavePlaylist = (e) => {
     e.preventDefault()
     if (!playlistName.trim()) {
       setErrorMessage('El nombre de la playlist es obligatorio.')
@@ -58,11 +144,20 @@ export default function Library() {
     }
 
     try {
-      createPlaylist(playlistName, user?.id)
+      if (editingPlaylistId) {
+        renamePlaylist(editingPlaylistId, playlistName, user?.id)
+      } else {
+        createPlaylist(playlistName, user?.id)
+      }
       setPlaylists(getPlaylists(user?.id))
       handleCloseModal()
     } catch (err) {
-      setErrorMessage(err.message || 'Error al crear la playlist.')
+      setErrorMessage(
+        err.message ||
+          (editingPlaylistId
+            ? 'Error al renombrar la playlist.'
+            : 'Error al crear la playlist.'),
+      )
     }
   }
 
@@ -116,6 +211,14 @@ export default function Library() {
               <Play size={16} fill="currentColor" />
               Reproducir
             </button>
+            <button
+              type="button"
+              onClick={() => handleOpenRenameModal(currentPlaylist)}
+              className="ml-2 inline-flex items-center gap-2 rounded-full border border-line px-4 py-2.5 text-xs font-semibold text-[#A1A7AF] transition hover:border-[#454C54] hover:text-white"
+            >
+              <Pencil size={14} />
+              Renombrar
+            </button>
 
             {playNotice && (
               <p className="mt-3 flex items-center gap-1.5 text-xs text-red-400">
@@ -168,11 +271,26 @@ export default function Library() {
                   </div>
                 </div>
 
-                <span className="text-xs text-[#858B93] pl-3">{song.genre}</span>
+                <div className="flex shrink-0 items-center gap-3 pl-3">
+                  <span className="hidden text-xs text-[#858B93] sm:inline">{song.genre}</span>
+                  <FavoriteButton song={song} compact />
+                </div>
               </div>
             ))}
           </div>
         )}
+        <PlaylistNameModal
+          isOpen={isModalOpen}
+          isRenaming={Boolean(editingPlaylistId)}
+          playlistName={playlistName}
+          errorMessage={errorMessage}
+          onNameChange={(event) => {
+            setPlaylistName(event.target.value)
+            if (errorMessage) setErrorMessage('')
+          }}
+          onClose={handleCloseModal}
+          onSubmit={handleSavePlaylist}
+        />
       </div>
     )
   }
@@ -227,6 +345,18 @@ export default function Library() {
               className="group relative cursor-pointer rounded-2xl border border-line bg-surface p-3 transition hover:border-[#333A41] hover:bg-[#17191D] sm:p-4"
             >
               <div className="relative flex aspect-square w-full flex-col justify-between overflow-hidden rounded-xl bg-gradient-to-br from-[#1E2631] via-[#141A22] to-[#0D1015] p-4 shadow-inner">
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    handleOpenRenameModal(playlist)
+                  }}
+                  aria-label={`Renombrar ${playlist.name}`}
+                  title="Renombrar playlist"
+                  className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-[#101215]/80 text-white transition hover:border-brand hover:text-brand"
+                >
+                  <Pencil size={15} />
+                </button>
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-brand/80">
                   Playlist
                 </span>
@@ -255,58 +385,18 @@ export default function Library() {
         </div>
       )}
 
-      {/* Modal crear playlist */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-line bg-[#121519] p-6 shadow-2xl">
-            <h2 className="font-display text-xl font-bold text-white">Crear una playlist</h2>
-            <p className="mt-1 text-xs text-[#858B93]">
-              Dale un nombre a tu nueva colección musical.
-            </p>
-
-            <form onSubmit={handleCreateSubmit} className="mt-5">
-              <label htmlFor="playlistName" className="mb-1.5 block text-xs font-semibold text-[#858B93]">
-                Nombre de la playlist
-              </label>
-              <input
-                id="playlistName"
-                type="text"
-                value={playlistName}
-                onChange={(e) => {
-                  setPlaylistName(e.target.value)
-                  if (errorMessage) setErrorMessage('')
-                }}
-                placeholder="Ej. Rock Clásico, Relax, Favoritas..."
-                autoFocus
-                className="w-full rounded-xl border border-line bg-[#1A1D23] px-4 py-2.5 text-sm text-white placeholder-[#737982] outline-none transition focus:border-brand"
-              />
-
-              {errorMessage && (
-                <div className="mt-2.5 flex items-center gap-1.5 text-xs text-red-400">
-                  <AlertCircle size={14} />
-                  <span>{errorMessage}</span>
-                </div>
-              )}
-
-              <div className="mt-6 flex justify-end gap-2.5">
-                <button
-                  type="button"
-                  onClick={handleCloseModal}
-                  className="rounded-full border border-line px-4 py-2 text-xs font-semibold text-[#A1A7AF] transition hover:text-white"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="rounded-full bg-brand px-5 py-2 text-xs font-bold text-[#07130b] transition hover:brightness-110 active:scale-95"
-                >
-                  Confirmar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <PlaylistNameModal
+        isOpen={isModalOpen}
+        isRenaming={Boolean(editingPlaylistId)}
+        playlistName={playlistName}
+        errorMessage={errorMessage}
+        onNameChange={(event) => {
+          setPlaylistName(event.target.value)
+          if (errorMessage) setErrorMessage('')
+        }}
+        onClose={handleCloseModal}
+        onSubmit={handleSavePlaylist}
+      />
     </div>
   )
 }

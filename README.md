@@ -27,17 +27,42 @@ soundwave/
     ├── main.jsx
     ├── index.css
     ├── components/
-    │   └── layout/
-    │       └── MainLayout.jsx
+    │   ├── ads/
+    │   │   └── AdBanner.jsx
+    │   ├── layout/
+    │   │   └── MainLayout.jsx
+    │   ├── player/
+    │   │   └── MusicPlayer.jsx
+    │   └── songs/
+    │   │   ├── FavoriteButton.jsx
+    │   │   └── SongCard.jsx
     ├── context/
-    │   └── AuthContext.jsx
+    │   ├── AuthContext.jsx
+    │   ├── FavoritesContext.jsx
+    │   └── PlayerContext.jsx
+    ├── data/
+    │   ├── ads.js
+    │   ├── songs.js
+    │   └── users.js
+    ├── config/
+    │   └── navigation.js
     ├── pages/
+    │   ├── Account.jsx
+    │   ├── AdminAds.jsx
     │   ├── Dashboard.jsx
+    │   ├── Favorites.jsx
+    │   ├── Library.jsx
     │   ├── Login.jsx
     │   └── Register.jsx
     ├── routes/
     │   └── ProtectedRoute.jsx
-    └── services/                 # Reservado para servicios e integraciones futuras
+    ├── services/
+    │   ├── adsStorage.js
+    │   ├── favoritesStorage.js
+    │   └── playlistStorage.js
+    └── utils/
+        ├── imageUtils.js
+        └── userHelpers.js
 ```
 
 ## Instalación y Ejecución
@@ -103,6 +128,10 @@ Cualquier otra cuenta se crea desde "Crear cuenta". Los oyentes nuevos empiezan 
 5. Para **dejar de mostrarlo**: presionar **Desactivar**.
 
 > Los anuncios y las cuentas se guardan en el navegador, por eso cada computadora tiene sus propios datos.
+
+## Biblioteca y canciones favoritas
+
+Desde **Mi biblioteca** podés crear playlists y cambiar sus nombres. Marcá una canción con el ícono de corazón para guardarla en **Canciones favoritas**; podés quitarla de favoritos desde la misma tarjeta o desde esa vista. Las playlists y las canciones favoritas se guardan localmente en el navegador y se separan por usuario.
 
 ## Licencia / Estado
 
