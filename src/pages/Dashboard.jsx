@@ -1,8 +1,10 @@
 import { useSearchParams } from 'react-router-dom'
-import { LogOut, Music2 } from 'lucide-react'
+import { Heart, LogOut } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { usePlayer } from '../context/PlayerContext.jsx'
 import { GENRES, getSongsByGenre, songs } from '../data/songs.js'
+import SongCard from '../components/songs/SongCard.jsx'
 
 const recommendations = GENRES.map((genre) => ({
   genre,
@@ -40,14 +42,23 @@ export default function Dashboard() {
             Música para acompañar cada momento.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={logout}
-          className="inline-flex items-center gap-2 rounded-full border border-line bg-[#15181C] px-4 py-2.5 text-xs font-semibold text-[#B4BAC1] transition hover:border-[#454C54] hover:text-white"
-        >
-          <LogOut size={15} />
-          Cerrar sesión
-        </button>
+        <div className="flex items-center gap-2">
+          <Link
+            to="/favorites"
+            className="inline-flex items-center gap-2 rounded-full border border-line bg-[#15181C] px-4 py-2.5 text-xs font-semibold text-[#B4BAC1] transition hover:border-[#454C54] hover:text-white"
+          >
+            <Heart size={15} />
+            Favoritas
+          </Link>
+          <button
+            type="button"
+            onClick={logout}
+            className="inline-flex items-center gap-2 rounded-full border border-line bg-[#15181C] px-4 py-2.5 text-xs font-semibold text-[#B4BAC1] transition hover:border-[#454C54] hover:text-white"
+          >
+            <LogOut size={15} />
+            Cerrar sesión
+          </button>
+        </div>
       </section>
 
       {/* Si hay búsqueda activa: mostramos resultados o estado vacío */}
@@ -78,26 +89,7 @@ export default function Dashboard() {
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
               {searchResults.map((song) => (
-                <article
-                  key={song.id}
-                  onClick={() => playSong(song)}
-                  className="group cursor-pointer rounded-2xl border border-line bg-surface p-3 transition hover:border-[#333A41] hover:bg-[#17191D] sm:p-4"
-                >
-                  <div className="relative aspect-square overflow-hidden rounded-xl bg-[#202329]">
-                    <img
-                      src={song.image}
-                      alt={`Carátula de ${song.title}`}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent opacity-0 transition group-hover:opacity-100" />
-                    <span className="absolute bottom-3 right-3 flex h-10 w-10 translate-y-2 items-center justify-center rounded-full bg-brand text-[#07130b] opacity-0 shadow-lg transition group-hover:translate-y-0 group-hover:opacity-100">
-                      <Music2 size={18} fill="currentColor" />
-                    </span>
-                  </div>
-                  <h3 className="mt-3 truncate text-sm font-semibold">{song.title}</h3>
-                  <p className="mt-1 truncate text-xs text-[#858B93]">{song.artist}</p>
-                </article>
+                <SongCard key={song.id} song={song} onPlay={() => playSong(song)} />
               ))}
             </div>
           )}
@@ -115,26 +107,7 @@ export default function Dashboard() {
               </div>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
                 {section.songs.map((song) => (
-                  <article
-                    key={song.id}
-                    onClick={() => playSong(song)}
-                    className="group cursor-pointer rounded-2xl border border-line bg-surface p-3 transition hover:border-[#333A41] hover:bg-[#17191D] sm:p-4"
-                  >
-                    <div className="relative aspect-square overflow-hidden rounded-xl bg-[#202329]">
-                      <img
-                        src={song.image}
-                        alt={`Carátula de ${song.title}`}
-                        loading="lazy"
-                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent opacity-0 transition group-hover:opacity-100" />
-                      <span className="absolute bottom-3 right-3 flex h-10 w-10 translate-y-2 items-center justify-center rounded-full bg-brand text-[#07130b] opacity-0 shadow-lg transition group-hover:translate-y-0 group-hover:opacity-100">
-                        <Music2 size={18} fill="currentColor" />
-                      </span>
-                    </div>
-                    <h3 className="mt-3 truncate text-sm font-semibold">{song.title}</h3>
-                    <p className="mt-1 truncate text-xs text-[#858B93]">{song.artist}</p>
-                  </article>
+                  <SongCard key={song.id} song={song} onPlay={() => playSong(song)} />
                 ))}
               </div>
             </section>

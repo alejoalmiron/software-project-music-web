@@ -23,8 +23,10 @@ export function savePlaylists(playlists) {
   try {
     localStorage.setItem(PLAYLISTS_STORAGE_KEY, JSON.stringify(playlists))
     window.dispatchEvent(new Event(PLAYLISTS_CHANGED_EVENT))
+    return true
   } catch (error) {
     console.error('Error al guardar playlists en localStorage:', error)
+    return false
   }
 }
 
@@ -50,6 +52,34 @@ export function createPlaylist(name, userId) {
   const updatedPlaylists = [newPlaylist, ...playlists]
   savePlaylists(updatedPlaylists)
   return newPlaylist
+}
+
+export function renamePlaylist(playlistId, name, userId) {
+  const trimmedName = name?.trim()
+  if (!trimmedName) {
+    throw new Error('El nombre de la playlist es obligatorio')
+  }
+  if (!userId) {
+    throw new Error('Tenés que iniciar sesión para renombrar una playlist')
+  }
+
+  const playlists = readAllPlaylists()
+  const playlist = playlists.find(
+    (item) => item.id === playlistId && item.ownerId === userId,
+  )
+  if (!playlist) {
+    throw new Error('No se encontró una playlist propia para renombrar.')
+  }
+
+  const updatedPlaylists = playlists.map((item) =>
+    item.id === playlistId && item.ownerId === userId
+      ? { ...item, name: trimmedName }
+      : item,
+  )
+  if (!savePlaylists(updatedPlaylists)) {
+    throw new Error('No se pudieron guardar los cambios de la playlist.')
+  }
+  return { ...playlist, name: trimmedName }
 }
 
 // Agregar canción a la playlist (evita duplicados)
