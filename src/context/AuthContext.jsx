@@ -6,6 +6,7 @@ const AuthContext = createContext(null)
 
 const SESSION_KEY = 'soundwave.session'
 const USERS_KEY = 'soundwave.users'
+const EXPIRED_PLAN_NOTICE_KEY = 'soundwave.plan-expired-notice'
 const REGISTRABLE_ROLES = new Set([ROLES.OYENTE, ROLES.PUBLICADOR])
 const PREMIUM_TRIAL_MAX_DAYS = 60
 
@@ -53,14 +54,48 @@ function toSessionUser({ id, name, email, role, plan }) {
   return { id, name, email, role, plan }
 }
 
+function hasExpiredPremiumPlan(account) {
+  if (account?.role !== ROLES.OYENTE || account.plan?.type !== PLANS.PREMIUM) {
+    return false
+  }
+  const expiryTime = Date.parse(account.plan.expiresAt)
+  return !Number.isFinite(expiryTime) || expiryTime <= Date.now()
+}
+
+function readPlanExpiredNotice(userId) {
+  if (typeof userId !== 'string') return false
+  try {
+    const notice = JSON.parse(localStorage.getItem(EXPIRED_PLAN_NOTICE_KEY) ?? 'null')
+    return notice?.userId === userId
+  } catch {
+    localStorage.removeItem(EXPIRED_PLAN_NOTICE_KEY)
+    return false
+  }
+}
+
+function downgradeExpiredPlan(account, users) {
+  if (!hasExpiredPremiumPlan(account)) return account
+
+  const freeAccount = { ...account, plan: FREE_PLAN }
+  const updatedUsers = users.map((storedUser) =>
+    storedUser.id === account.id ? freeAccount : storedUser,
+  )
+  localStorage.setItem(USERS_KEY, JSON.stringify(updatedUsers))
+  localStorage.setItem(EXPIRED_PLAN_NOTICE_KEY, JSON.stringify({ userId: account.id }))
+  return freeAccount
+}
+
 // La sesión guarda solo el id; los datos se leen siempre de las cuentas,
 // así un cambio de plan se refleja sin volver a iniciar sesión.
 function readSession() {
   try {
     const saved = JSON.parse(localStorage.getItem(SESSION_KEY) ?? 'null')
     if (!saved || typeof saved.id !== 'string') return null
-    const account = readUsers().find((candidate) => candidate.id === saved.id)
-    return account ? toSessionUser(account) : null
+    const users = readUsers()
+    const account = users.find((candidate) => candidate.id === saved.id)
+    if (!account) return null
+    const resolvedAccount = downgradeExpiredPlan(account, users)
+    return toSessionUser(resolvedAccount)
   } catch {
     localStorage.removeItem(SESSION_KEY)
     return null
@@ -69,24 +104,29 @@ function readSession() {
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(readSession)
+  const [planExpiredNotice, setPlanExpiredNotice] = useState(() =>
+    readPlanExpiredNotice(user?.id),
+  )
 
   function startSession(account) {
     localStorage.setItem(SESSION_KEY, JSON.stringify({ id: account.id }))
     const session = toSessionUser(account)
     setUser(session)
+    setPlanExpiredNotice(readPlanExpiredNotice(account.id))
     return session
   }
 
   function login({ email, password }) {
     const normalizedEmail = email.trim().toLowerCase()
-    const account = readUsers().find(
+    const users = readUsers()
+    const account = users.find(
       (candidate) =>
         candidate.email === normalizedEmail && candidate.password === password,
     )
     if (!account) {
       throw new Error('El correo electrónico o la contraseña son incorrectos.')
     }
-    return startSession(account)
+    return startSession(downgradeExpiredPlan(account, users))
   }
 
   function register({ name, email, password, role = ROLES.OYENTE }) {
@@ -126,7 +166,16 @@ export function AuthProvider({ children }) {
       account.id === user.id ? { ...account, plan } : account,
     )
     localStorage.setItem(USERS_KEY, JSON.stringify(users))
+    if (plan.type === PLANS.PREMIUM) {
+      localStorage.removeItem(EXPIRED_PLAN_NOTICE_KEY)
+      setPlanExpiredNotice(false)
+    }
     setUser({ ...user, plan })
+  }
+
+  function dismissPlanExpiredNotice() {
+    localStorage.removeItem(EXPIRED_PLAN_NOTICE_KEY)
+    setPlanExpiredNotice(false)
   }
 
   function logout() {
@@ -140,12 +189,14 @@ export function AuthProvider({ children }) {
       isAuthenticated: Boolean(user),
       role: user?.role ?? null,
       plan: user?.plan ?? null,
+      planExpiredNotice,
       login,
       register,
       updatePlan,
+      dismissPlanExpiredNotice,
       logout,
     }),
-    [user],
+    [user, planExpiredNotice],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
