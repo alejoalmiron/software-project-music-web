@@ -13,25 +13,38 @@ export const PlayerProvider = ({ children }) => {
   const [queue, setQueue] = useState([]); // canciones de la lista que se está escuchando (ej: la playlist)
 
   // Reproducir una canción individual (Si viene de una playlist conserva esa lista, si es suelta genera por género)
- // Al tocar una canción (desde donde sea): se arma la cola de ese lugar y la canción suena desde cero.
-// Si se toca la misma canción que ya suena, vuelve a empezar.
-const playSong = (song, list = []) => {
-  if (list && list.length > 0) {
-    // Viene de una lista (ej: playlist): la cola es exactamente esa lista
-    setQueue(list);
-  } else {
-    // Canción suelta (inicio / buscador): la cola es ella + las del mismo género
-    const currentGenre = song.genre?.trim().toLowerCase();
-    const sameGenreSongs = songs.filter(
-      (s) => s.id !== song.id && s.genre?.trim().toLowerCase() === currentGenre
-    );
-    setQueue([song, ...sameGenreSongs]);
-  }
+  // Al tocar una canción (desde donde sea): se arma la cola de ese lugar y la canción suena desde cero.
+  // Si se toca la misma canción que ya suena, vuelve a empezar.
+  const playSong = (song, list = []) => {
+    if (list && list.length > 0) {
+      // Viene de una lista (ej: playlist): la cola es exactamente esa lista
+      setQueue(list);
+    } else {
+      // Canción suelta (inicio / buscador): la cola es ella + las del mismo género
+      const currentGenre = song.genre?.trim().toLowerCase();
+      const sameGenreSongs = songs.filter(
+        (s) => s.id !== song.id && s.genre?.trim().toLowerCase() === currentGenre
+      );
+      setQueue([song, ...sameGenreSongs]);
+    }
 
-  setCurrentSong(song);
-  setIsPlaying(true);
-  setCurrentTime(0);
-};
+    setCurrentSong(song);
+    setIsPlaying(true);
+    setCurrentTime(0);
+  };
+
+  // =========================================================================
+  // >>> AGREGADO NUEVO: Función para reproducir desde la cola <<<
+  // Permite saltar a una canción de la cola sin recalcular ni reordenar 'queue'.
+  // Las canciones anteriores quedan arriba, la actual suena y las siguientes abajo.
+  // =========================================================================
+  const playFromQueue = (song) => {
+    if (!song) return;
+    setCurrentSong(song);
+    setIsPlaying(true);
+    setCurrentTime(0);
+  };
+  // =========================================================================
 
   // 2. Alternar entre Play y Pausa
   const togglePlay = () => {
@@ -128,6 +141,7 @@ const playSong = (song, list = []) => {
         currentTime,
         queue,
         playSong,
+        playFromQueue, // <<< AGREGADO NUEVO: exportada para que la use el reproductor / cola
         playList,
         playNext,
         playPrevious,

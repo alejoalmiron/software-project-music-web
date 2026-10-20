@@ -2,13 +2,32 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { usePlayer } from '../../context/PlayerContext.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { Play, Pause, SkipBack, SkipForward, MoreVertical, Plus, Check, ListMusic, Music } from 'lucide-react';
+import {
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
+  MoreVertical,
+  Plus,
+  Check,
+  ListMusic,
+  Volume2,
+} from 'lucide-react';
 import { getPlaylists, addSongToPlaylist } from '../../services/playlistStorage.js';
 
 export default function MusicPlayer() {
   const {
-    currentSong, isPlaying, togglePlay, currentTime, seek,
-    playNext, playPrevious, hasNext, hasPrevious, queue
+    currentSong,
+    isPlaying,
+    togglePlay,
+    currentTime,
+    seek,
+    playNext,
+    playPrevious,
+    hasNext,
+    hasPrevious,
+    queue,
+    playFromQueue, // <<< NUEVO: función para reproducir desde la cola sin alterar su orden
   } = usePlayer();
   const { user } = useAuth();
   const [dragging, setDragging] = useState(false);
@@ -19,7 +38,7 @@ export default function MusicPlayer() {
   const [queueOpen, setQueueOpen] = useState(false);
   const [playlists, setPlaylists] = useState([]);
   const [addedMessage, setAddedMessage] = useState('');
-  
+
   const menuRef = useRef(null);
   const queueRef = useRef(null);
 
@@ -83,8 +102,8 @@ export default function MusicPlayer() {
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
-  const progressPercent = currentSong.duration 
-    ? (currentTime / currentSong.duration) * 100 
+  const progressPercent = currentSong.duration
+    ? (currentTime / currentSong.duration) * 100
     : 0;
 
   // Calcula el segundo según dónde se hizo click (o se arrastró) sobre la barra
@@ -104,11 +123,7 @@ export default function MusicPlayer() {
     if (dragging) seekFromEvent(e);
   };
 
-  const handlePointerUp = () => setDragging(false); 
-
-  // Lean Inception 1: Filtrar la lista de reproducción para obtener las canciones siguientes
-  const currentIdx = queue.findIndex((s) => s.id === currentSong.id);
-  const upcomingSongs = currentIdx >= 0 ? queue.slice(currentIdx + 1) : [];
+  const handlePointerUp = () => setDragging(false);
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 h-[88px] flex items-center justify-between border-t border-line bg-[#121418] px-4 py-3 text-white shadow-lg md:left-[252px]">
@@ -116,12 +131,12 @@ export default function MusicPlayer() {
       {/* LADO IZQUIERDO: Botón "Cola" + Información de la canción actual */}
       <div className="flex w-1/3 items-center gap-3">
         
-        {/* BOTÓN "COLA" (Lean Inception 1 - Ubicado en la parte izquierda) */}
+        {/* BOTÓN "COLA" */}
         <div className="relative shrink-0" ref={queueRef}>
           <button
             type="button"
             onClick={handleToggleQueue}
-            title="Ver canción actual y próximas"
+            title="Ver cola de reproducción"
             className={`flex items-center gap-1.5 rounded-xl border border-line px-3 py-1.5 text-xs font-medium transition active:scale-95 ${
               queueOpen ? 'bg-brand text-black border-brand' : 'bg-[#16191F] text-white hover:bg-white/10'
             }`}
@@ -132,44 +147,67 @@ export default function MusicPlayer() {
 
           {/* Popover / Desplegable de la Cola de Reproducción */}
           {queueOpen && (
-            <div className="absolute bottom-12 left-0 z-50 w-72 rounded-2xl border border-line bg-[#16191F] p-3 shadow-2xl">
-              <p className="px-1 py-1 text-[11px] font-bold uppercase tracking-wider text-[#858B93]">
-                Sonando ahora
-              </p>
-              
-              {/* Canción Actual Resaltada (Criterio de Aceptación Ficha 1) */}
-              <div className="flex items-center gap-2.5 rounded-xl bg-brand/15 border border-brand/40 p-2.5 mb-3 shadow-sm">
-                <img
-                  src={currentSong.image}
-                  alt={currentSong.title}
-                  className="h-10 w-10 rounded-lg object-cover shrink-0"
-                />
-                <div className="truncate">
-                  <p className="text-xs font-bold text-brand truncate">{currentSong.title}</p>
-                  <p className="text-[11px] text-[#858B93] truncate">{currentSong.artist}</p>
-                </div>
+            <div className="absolute bottom-12 left-0 z-50 w-80 max-h-[70vh] flex flex-col rounded-2xl border border-line bg-[#16191F] p-3 shadow-2xl">
+              <div className="flex items-center justify-between px-1 py-1 border-b border-line/40 pb-2 mb-2">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[#858B93]">
+                  Cola de reproducción
+                </p>
+                <span className="text-[10px] text-[#737982]">
+                  {queue.length} {queue.length === 1 ? 'canción' : 'canciones'}
+                </span>
               </div>
-
-              <p className="px-1 py-1 text-[11px] font-bold uppercase tracking-wider text-[#858B93]">
-                A continuación
-              </p>
               
-              <div className="max-h-44 overflow-y-auto space-y-1">
-                {/* Mensaje exacto cuando no hay más canciones (Criterio de Aceptación Ficha 1) */}
-                {upcomingSongs.length === 0 ? (
+              {/* Listado de todas las canciones en orden fijo */}
+              <div className="overflow-y-auto space-y-1 pr-1 max-h-64">
+                {queue.length === 0 ? (
                   <p className="p-3 text-center text-xs font-medium text-[#858B93] bg-white/5 rounded-xl">
-                    No hay más canciones en la cola
+                    No hay canciones en la cola
                   </p>
                 ) : (
-                  upcomingSongs.map((song, i) => (
-                    <div key={`${song.id}-${i}`} className="flex items-center justify-between rounded-lg p-2 text-xs hover:bg-white/5">
-                      <div className="truncate pr-2">
-                        <p className="font-medium text-white truncate">{song.title}</p>
-                        <p className="text-[10px] text-[#858B93] truncate">{song.artist}</p>
+                  queue.map((song, i) => {
+                    const isCurrent = song.id === currentSong.id;
+
+                    return (
+                      <div
+                        key={`${song.id}-${i}`}
+                        onClick={() => playFromQueue(song)}
+                        className={`flex items-center justify-between gap-2.5 rounded-xl p-2 text-xs cursor-pointer transition ${
+                          isCurrent
+                            ? 'bg-brand/15 border border-brand/40 shadow-sm'
+                            : 'hover:bg-white/5 border border-transparent opacity-85 hover:opacity-100'
+                        }`}
+                        title={isCurrent ? 'Reproduciendo ahora' : `Reproducir ${song.title}`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          {/* Número o icono de sonido activo */}
+                          <div className="w-4 flex justify-center shrink-0">
+                            {isCurrent ? (
+                              <Volume2 size={14} className="text-brand animate-pulse" />
+                            ) : (
+                              <span className="text-[11px] text-[#656C76]">{i + 1}</span>
+                            )}
+                          </div>
+
+                          <img
+                            src={song.image}
+                            alt={song.title}
+                            className="h-8 w-8 rounded-lg object-cover shrink-0"
+                          />
+
+                          <div className="truncate min-w-0">
+                            <p className={`truncate text-xs ${isCurrent ? 'font-bold text-brand' : 'font-medium text-white'}`}>
+                              {song.title}
+                            </p>
+                            <p className="text-[10px] text-[#858B93] truncate">{song.artist}</p>
+                          </div>
+                        </div>
+
+                        <span className="text-[10px] text-[#858B93] shrink-0">
+                          {formatTime(song.duration)}
+                        </span>
                       </div>
-                      <span className="text-[10px] text-[#858B93] shrink-0">{song.genre}</span>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
