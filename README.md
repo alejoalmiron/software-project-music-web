@@ -95,7 +95,14 @@ comparar Free con Premium según anuncios, precio y duración. El precio mostrad
 (ARS 2.999 por 30 días) es ilustrativo. Un oyente Free puede elegir Premium y completar un
 formulario de tarjeta de prueba; al confirmar, el plan se activa por 30 días y se ocultan los
 anuncios. Si el oyente ya tiene Premium activo, se muestra la fecha de vencimiento y los días
-restantes, sin ofrecer otra contratación.
+restantes, sin ofrecer otra contratación. Cuando Premium vence, el plan vuelve a Free al iniciar
+sesión y se muestra un aviso persistente con acceso a Gestión de cuenta para elegir Premium otra vez.
+
+## Eliminar una playlist
+
+Desde **Mi biblioteca**, abrí la playlist que quieras quitar y seleccioná **Eliminar**. La pantalla
+pedirá confirmación; **Cancelar** conserva la playlist y **Confirmar** la elimina de la biblioteca
+del usuario.
 
 ## Gestión de anuncios en banners
 

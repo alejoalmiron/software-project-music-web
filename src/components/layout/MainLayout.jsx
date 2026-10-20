@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import {
+  AlertCircle,
   Disc3,
   Search,
   X,
@@ -14,7 +15,7 @@ import { usePlayer } from '../../context/PlayerContext.jsx'
 import MusicPlayer from '../player/MusicPlayer.jsx'
 
 export default function MainLayout() {
-  const { user } = useAuth()
+  const { user, planExpiredNotice, dismissPlanExpiredNotice } = useAuth()
   const { currentSong } = usePlayer()
   const navItems = navigationByRole[user?.role] ?? []
   const adsVisible = showsAds(user)
@@ -119,6 +120,27 @@ export default function MainLayout() {
             Escuchá lo que te gusta
           </div>
         </header>
+
+        {planExpiredNotice && (
+          <div className="mx-5 mt-5 flex items-start gap-3 rounded-xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100 sm:mx-8 lg:mx-10">
+            <AlertCircle size={18} className="mt-0.5 shrink-0 text-amber-300" />
+            <p className="min-w-0 flex-1 leading-6">
+              Tu plan Premium venció y tu cuenta volvió a Free. Los anuncios vuelven a mostrarse.
+              {' '}
+              <Link to="/account" className="font-semibold underline underline-offset-2">
+                Elegí Premium nuevamente desde Gestión de cuenta.
+              </Link>
+            </p>
+            <button
+              type="button"
+              onClick={dismissPlanExpiredNotice}
+              className="shrink-0 rounded-full p-1 text-amber-200 transition hover:bg-white/10 hover:text-white"
+              aria-label="Cerrar aviso de plan vencido"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
 
         <div className="mx-auto flex w-full max-w-[1440px] gap-6 px-5 py-8 sm:px-8 lg:px-10">
           <main className="min-w-0 flex-1">

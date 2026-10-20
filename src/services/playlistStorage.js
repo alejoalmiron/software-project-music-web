@@ -82,6 +82,28 @@ export function renamePlaylist(playlistId, name, userId) {
   return { ...playlist, name: trimmedName }
 }
 
+export function deletePlaylist(playlistId, userId) {
+  if (!userId) {
+    throw new Error('Tenés que iniciar sesión para eliminar una playlist.')
+  }
+
+  const playlists = readAllPlaylists()
+  const playlist = playlists.find(
+    (item) => item.id === playlistId && item.ownerId === userId,
+  )
+  if (!playlist) {
+    throw new Error('No se encontró una playlist propia para eliminar.')
+  }
+
+  const updatedPlaylists = playlists.filter(
+    (item) => item.id !== playlistId || item.ownerId !== userId,
+  )
+  if (!savePlaylists(updatedPlaylists)) {
+    throw new Error('No se pudo eliminar la playlist.')
+  }
+  return playlist
+}
+
 // Agregar canción a la playlist (evita duplicados)
 export function addSongToPlaylist(playlistId, song, userId) {
   const playlists = readAllPlaylists()
