@@ -10,6 +10,7 @@ import Register from './pages/Register.jsx'
 import ProtectedRoute from './routes/ProtectedRoute.jsx'
 import { ROLES } from './utils/userHelpers.js'
 import Library from './pages/Library.jsx'
+import ArtistProfile from './pages/ArtistProfile.jsx' // pag de artrsias
 
 function NotFoundRedirect() {
   return <Navigate to="/login" replace />
@@ -29,8 +30,15 @@ export default function App() {
               <Route element={<MainLayout />}>
                 <Route index element={<Dashboard />} />
                 <Route path="library" element={<Library />} />
+                
+                {/* Rutas exclusivas para Oyentes */}
                 <Route element={<ProtectedRoute roles={[ROLES.OYENTE]} />}>
                   <Route path="account" element={<Account />} />
+                </Route>
+
+                {/* Rutas exclusivas para Publicadores (NUEVO) */}
+                <Route element={<ProtectedRoute roles={[ROLES.PUBLICADOR]} />}>
+                  <Route path="artist-profile" element={<ArtistProfile />} />
                 </Route>
 
                 {/* Rutas exclusivas para Admin */}
