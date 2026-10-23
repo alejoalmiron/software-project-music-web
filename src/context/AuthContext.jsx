@@ -50,8 +50,9 @@ function readUsers() {
   return users
 }
 
-function toSessionUser({ id, name, email, role, plan }) {
-  return { id, name, email, role, plan }
+// Actualizado para incluir artistName y genre en la sesión del usuario
+function toSessionUser({ id, name, email, role, plan, artistName, genre }) {
+  return { id, name, email, role, plan, artistName: artistName ?? '', genre: genre ?? '' }
 }
 
 function hasExpiredPremiumPlan(account) {
@@ -86,7 +87,7 @@ function downgradeExpiredPlan(account, users) {
 }
 
 // La sesión guarda solo el id; los datos se leen siempre de las cuentas,
-// así un cambio de plan se refleja sin volver a iniciar sesión.
+// así un cambio de plan o perfil se refleja sin volver a iniciar sesión.
 function readSession() {
   try {
     const saved = JSON.parse(localStorage.getItem(SESSION_KEY) ?? 'null')
@@ -152,6 +153,8 @@ export function AuthProvider({ children }) {
       password,
       role,
       plan: role === ROLES.OYENTE ? FREE_PLAN : null,
+      artistName: '',
+      genre: '',
     }
     localStorage.setItem(USERS_KEY, JSON.stringify([...users, account]))
     return startSession(account)
@@ -178,6 +181,31 @@ export function AuthProvider({ children }) {
     setPlanExpiredNotice(false)
   }
 
+  // Crear mi perfil de artista (publicador)
+  function createArtistProfile({ artistName, genre }) {
+    const trimmedName = artistName?.trim()
+    const trimmedGenre = genre?.trim()
+
+    if (!trimmedName || !trimmedGenre) {
+      throw new Error('Completá el nombre artístico y el género principal.')
+    }
+
+    if (!user || user.role !== ROLES.PUBLICADOR) {
+      throw new Error('Solo los publicadores pueden crear un perfil de artista.')
+    }
+
+    const users = readUsers().map((account) =>
+      account.id === user.id
+        ? { ...account, artistName: trimmedName, genre: trimmedGenre }
+        : account,
+    )
+
+    localStorage.setItem(USERS_KEY, JSON.stringify(users))
+    const updatedUser = { ...user, artistName: trimmedName, genre: trimmedGenre }
+    setUser(updatedUser)
+    return updatedUser
+  }
+
   function logout() {
     localStorage.removeItem(SESSION_KEY)
     setUser(null)
@@ -194,6 +222,7 @@ export function AuthProvider({ children }) {
       register,
       updatePlan,
       dismissPlanExpiredNotice,
+      createArtistProfile,
       logout,
     }),
     [user, planExpiredNotice],
