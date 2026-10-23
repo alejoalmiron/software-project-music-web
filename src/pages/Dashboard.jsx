@@ -4,13 +4,10 @@ import { Heart, LogOut, Music2, Mic } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { usePlayer } from '../context/PlayerContext.jsx'
-import { GENRES, getSongsByGenre, songs } from '../data/songs.js'
+import { GENRES } from '../data/songs.js'
+import { getCatalogSongs } from '../services/songStorage.js'
 import SongCard from '../components/songs/SongCard.jsx'
 
-const recommendations = GENRES.map((genre) => ({
-  genre,
-  songs: getSongsByGenre(genre),
-}))
 
 export default function Dashboard() {
   const { user, logout, createArtistProfile } = useAuth()
@@ -137,11 +134,17 @@ export default function Dashboard() {
   }
 
   // --- RESTO DEL DASHBOARD NORMAL (Oyentes, Admins o Publicadores con perfil creado) ---
+  
+const catalog = getCatalogSongs()
+const recommendations = GENRES.map((genre) => ({
+  genre,
+  songs: catalog.filter((song) => song.genre === genre),
+}))
   const searchQuery = searchParams.get('search')?.trim() || ''
   const hasSearched = Boolean(searchQuery)
 
   const searchResults = hasSearched
-    ? songs.filter((song) =>
+    ? catalog.filter((song) =>
         song.title.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : []

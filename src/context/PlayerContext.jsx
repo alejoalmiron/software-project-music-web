@@ -1,7 +1,7 @@
 // src/context/PlayerContext.jsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext.jsx';
-import { songs } from '../data/songs.js'; // Importación de datos para la Inception del mismo género
+import { getCatalogSongs } from '../services/songStorage.js'; // Catálogo: precargadas + publicadas
 
 const PlayerContext = createContext();
 
@@ -22,7 +22,7 @@ export const PlayerProvider = ({ children }) => {
     } else {
       // Canción suelta (inicio / buscador): la cola es ella + las del mismo género
       const currentGenre = song.genre?.trim().toLowerCase();
-      const sameGenreSongs = songs.filter(
+      const sameGenreSongs = getCatalogSongs().filter(
         (s) => s.id !== song.id && s.genre?.trim().toLowerCase() === currentGenre
       );
       setQueue([song, ...sameGenreSongs]);

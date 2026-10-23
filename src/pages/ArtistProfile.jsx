@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Mic, Upload, CheckCircle2, Music } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
-import { saveSongDraft, getPublisherSongs } from '../services/songStorage.js'
+import { saveSongDraft, getPublisherSongs, publishSong  } from '../services/songStorage.js'
 import { GENRES } from '../data/songs.js'
 
 function formatDuration(seconds) {
@@ -12,6 +12,8 @@ function formatDuration(seconds) {
 export default function ArtistProfile() {
   const { user } = useAuth()
   const mySongs = getPublisherSongs(user?.email)
+  const [confirmingId, setConfirmingId] = useState(null)
+  const [publishedTitle, setPublishedTitle] = useState('')
   
   // Estados para el panel de "Subir canción" que aparece abajo
   const [isUploading, setIsUploading] = useState(false)
@@ -78,6 +80,12 @@ export default function ArtistProfile() {
     } catch (err) {
       setErrorSong('No se pudo guardar la canción como borrador.')
     }
+  }
+
+  function handlePublish(song) {
+    publishSong(song.id)
+    setConfirmingId(null)
+    setPublishedTitle(song.title)
   }
 
   return (
@@ -221,15 +229,20 @@ export default function ArtistProfile() {
 
         <div className="mt-8 border-t border-line pt-6">
           <h3 className="mb-4 text-base font-semibold text-white">Mis canciones</h3>
-
+          {publishedTitle && (
+            <div className="mb-4 flex items-center gap-2 rounded-xl bg-brand/10 p-3 text-sm text-brand">
+              <CheckCircle2 size={18} />
+              <span>¡"{publishedTitle}" ya está publicada! Los oyentes pueden buscarla y escucharla.</span>
+            </div>
+          )}
           {mySongs.length === 0 ? (
-            <p className="text-sm text-[#858B93]">Todavía no cargaste ninguna canción.</p>
+            <p className="text-sm text-[#858B93]">Aún no hay canciones cargadas.</p>
           ) : (
             <ul className="space-y-3">
               {mySongs.map((song) => (
                 <li
                   key={song.id}
-                  className="flex items-center gap-4 rounded-xl border border-line bg-[#0D0F12] p-3"
+                  className="flex flex-wrap items-center gap-4 rounded-xl border border-line bg-[#0D0F12] p-3"
                 >
                   <img src={song.image} alt="" className="h-14 w-14 rounded-lg object-cover" />
                   <div className="min-w-0 flex-1">
@@ -247,6 +260,42 @@ export default function ArtistProfile() {
                   >
                     {song.status === 'publicada' ? 'Publicada' : 'Borrador'}
                   </span>
+                  {song.status === 'borrador' && confirmingId !== song.id && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setConfirmingId(song.id)
+                        setPublishedTitle('')
+                      }}
+                      className="rounded-xl bg-brand px-4 py-1.5 text-xs font-bold text-[#07130b] transition hover:brightness-110"
+                    >
+                      Publicar
+                    </button>
+                  )}
+
+                  {confirmingId === song.id && (
+                    <div className="flex w-full flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
+                      <p className="text-sm text-[#D7D9DC]">
+                        ¿Publicar esta canción? Los oyentes podrán escucharla.
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handlePublish(song)}
+                          className="rounded-xl bg-brand px-4 py-1.5 text-xs font-bold text-[#07130b] transition hover:brightness-110"
+                        >
+                          Confirmar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmingId(null)}
+                          className="rounded-xl bg-white/10 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-white/20"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>

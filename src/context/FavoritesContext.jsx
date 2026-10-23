@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { songs } from '../data/songs.js'
+import { getCatalogSongs } from '../services/songStorage.js'
 import {
   FAVORITES_CHANGED_EVENT,
   getFavoriteSongIds,
@@ -52,7 +52,7 @@ export function FavoritesProvider({ children }) {
   }
 
   const favoriteSongs = useMemo(
-    () => songs.filter((song) => favoriteIds.includes(song.id)),
+    () => getCatalogSongs().filter((song) => favoriteIds.includes(song.id)),
     [favoriteIds],
   )
 
