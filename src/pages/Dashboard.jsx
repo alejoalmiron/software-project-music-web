@@ -15,21 +15,30 @@ const recommendations = GENRES.map((genre) => ({
 export default function Dashboard() {
   const { user, logout, createArtistProfile } = useAuth()
   const { playSong } = usePlayer()
-
+  const [searchParams, setSearchParams] = useSearchParams()
+  
   // Estados locales por si es un publicador sin perfil al iniciar sesión
   const [artistNameInput, setArtistNameInput] = useState('')
   const [genreInput, setGenreInput] = useState('')
+  const [nameError, setNameError] = useState('')
+  const [genreError, setGenreError] = useState('')
   const [profileError, setProfileError] = useState('')
 
   // Validamos si es publicador y le falta el perfil artístico
   const isPublisherWithoutProfile = user?.role === 'publicador' && !user?.artistName
 
-function handleProfileSubmit(e) {
+  function handleProfileSubmit(e) {
     e.preventDefault()
     setProfileError('')
+
+    const missingName = !artistNameInput.trim()
+    const missingGenre = !genreInput
+    setNameError(missingName ? 'Ingresá tu nombre artístico.' : '')
+    setGenreError(missingGenre ? 'Elegí tu género principal.' : '')
+    if (missingName || missingGenre) return
+
     try {
       createArtistProfile({ artistName: artistNameInput, genre: genreInput })
-      window.location.reload() // recargar y muestre el inicioo
     } catch (err) {
       setProfileError(err.message)
     }
@@ -38,8 +47,21 @@ function handleProfileSubmit(e) {
   // Si es publicador y no tiene perfil, mostramos la pantalla obligatoria de bienvenida/creación
   if (isPublisherWithoutProfile) {
     return (
+      <>
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={logout}
+          className="inline-flex items-center gap-2 rounded-full border border-line bg-[#15181C] px-4 py-2.5 text-xs font-semibold text-[#B4BAC1] transition hover:border-[#454C54] hover:text-white"
+        >
+          <LogOut size={15} />
+          Cerrar sesión
+        </button>
+      </div>
+      
       <div className="mx-auto max-w-lg rounded-2xl border border-line bg-surface p-8 shadow-2xl mt-10">
         <div className="mb-6 flex items-center gap-3">
+          
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand/10 text-brand">
             <Mic size={24} />
           </span>
@@ -54,25 +76,46 @@ function handleProfileSubmit(e) {
             <span className="mb-2 block text-sm font-medium text-[#D7D9DC]">Nombre artístico</span>
             <input
               type="text"
-              className="w-full rounded-xl border border-line bg-[#0D0F12] px-4 py-3 text-sm text-white outline-none focus:border-brand"
+              className={`w-full rounded-xl border bg-[#0D0F12] px-4 py-3 text-sm text-white outline-none focus:border-brand ${
+                nameError ? 'border-red-400' : 'border-line'
+              }`}
               placeholder="Ej: Banda Sonica"
               value={artistNameInput}
-              onChange={(e) => setArtistNameInput(e.target.value)}
-              required
+              onChange={(e) => {
+                setArtistNameInput(e.target.value)
+                setNameError('')
+              }}
             />
+            {nameError && <span className="mt-1.5 block text-xs text-red-300">{nameError}</span>}
           </label>
 
-          <label className="block">
+           <div>
             <span className="mb-2 block text-sm font-medium text-[#D7D9DC]">Género principal</span>
-            <input
-              type="text"
-              className="w-full rounded-xl border border-line bg-[#0D0F12] px-4 py-3 text-sm text-white outline-none focus:border-brand"
-              placeholder="Ej: Rock / Trap / Pop"
-              value={genreInput}
-              onChange={(e) => setGenreInput(e.target.value)}
-              required
-            />
-          </label>
+            <div className="flex flex-wrap gap-2">
+              {GENRES.map((genre) => {
+                const selected = genreInput === genre
+                return (
+                  <button
+                    key={genre}
+                    type="button"
+                    onClick={() => {
+                      setGenreInput(genre)
+                      setGenreError('')
+                    }}
+                    aria-pressed={selected}
+                    className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                      selected
+                        ? 'border-brand bg-brand text-[#07130b]'
+                        : 'border-line text-[#D7D9DC] hover:bg-white/5'
+                    }`}
+                  >
+                    {genre}
+                  </button>
+                )
+              })}
+            </div>
+            {genreError && <p className="mt-1.5 text-xs text-red-300">{genreError}</p>}
+          </div>
 
           {profileError && (
             <p className="rounded-lg border border-red-400/20 bg-red-400/10 px-3 py-2 text-sm text-red-300">
@@ -84,15 +127,16 @@ function handleProfileSubmit(e) {
             type="submit"
             className="w-full rounded-xl bg-brand py-3 text-sm font-bold text-[#07130b] transition hover:brightness-110"
           >
-            Crear perfil y continuar
+            Crear perfil
           </button>
         </form>
+
       </div>
+      </>
     )
   }
 
   // --- RESTO DEL DASHBOARD NORMAL (Oyentes, Admins o Publicadores con perfil creado) ---
-  const [searchParams, setSearchParams] = useSearchParams()
   const searchQuery = searchParams.get('search')?.trim() || ''
   const hasSearched = Boolean(searchQuery)
 

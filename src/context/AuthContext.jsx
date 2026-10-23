@@ -1,4 +1,5 @@
 import { createContext, useContext, useMemo, useState } from 'react'
+import { songs } from '../data/songs.js'
 import { seedUsers } from '../data/users.js'
 import { FREE_PLAN, PLANS, ROLES, normalizeUser } from '../utils/userHelpers.js'
 
@@ -192,6 +193,20 @@ export function AuthProvider({ children }) {
 
     if (!user || user.role !== ROLES.PUBLICADOR) {
       throw new Error('Solo los publicadores pueden crear un perfil de artista.')
+    }
+
+    // El nombre artístico tiene que ser único (entre publicadores y artistas del catálogo)
+    const normalizedName = trimmedName.toLowerCase()
+    const takenByPublisher = readUsers().some(
+      (account) =>
+        account.id !== user.id &&
+        account.artistName?.trim().toLowerCase() === normalizedName,
+    )
+    const takenByCatalog = songs.some(
+      (song) => song.artist.trim().toLowerCase() === normalizedName,
+    )
+    if (takenByPublisher || takenByCatalog) {
+      throw new Error('Ese nombre artístico no está disponible. Elegí otro.')
     }
 
     const users = readUsers().map((account) =>

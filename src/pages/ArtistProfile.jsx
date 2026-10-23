@@ -5,12 +5,8 @@ import { saveSongDraft } from '../services/songStorage.js'
 import { GENRES } from '../data/songs.js'
 
 export default function ArtistProfile() {
-  const { user, createArtistProfile } = useAuth()
-  const [artistName, setArtistName] = useState(user?.artistName || '')
-  const [genre, setGenre] = useState(user?.genre || '')
-  const [successProfile, setSuccessProfile] = useState(false)
-  const [errorProfile, setErrorProfile] = useState('')
-
+  const { user } = useAuth()
+  
   // Estados para el panel de "Subir canción" que aparece abajo
   const [isUploading, setIsUploading] = useState(false)
   const [title, setTitle] = useState('')
@@ -21,17 +17,6 @@ export default function ArtistProfile() {
   const [successSong, setSuccessSong] = useState(false)
   const [errorSong, setErrorSong] = useState('')
 
-  function handleProfileSubmit(e) {
-    e.preventDefault()
-    setErrorProfile('')
-    setSuccessProfile(false)
-    try {
-      createArtistProfile({ artistName, genre })
-      setSuccessProfile(true)
-    } catch (err) {
-      setErrorProfile(err.message)
-    }
-  }
 
   function handleImageChange(e) {
     const file = e.target.files[0]
@@ -95,39 +80,16 @@ export default function ArtistProfile() {
           </div>
         </div>
 
-        <form onSubmit={handleProfileSubmit} className="space-y-5">
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-[#D7D9DC]">Nombre artístico</span>
-            <input
-              type="text"
-              className="w-full rounded-xl border border-line bg-[#0D0F12] px-4 py-3 text-sm text-white outline-none focus:border-brand"
-              value={artistName}
-              onChange={(e) => setArtistName(e.target.value)}
-              required
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-[#D7D9DC]">Género principal</span>
-            <input
-              type="text"
-              className="w-full rounded-xl border border-line bg-[#0D0F12] px-4 py-3 text-sm text-white outline-none focus:border-brand"
-              value={genre}
-              onChange={(e) => setGenre(e.target.value)}
-              required
-            />
-          </label>
-
-          {errorProfile && <p className="text-sm text-red-300">{errorProfile}</p>}
-          {successProfile && <p className="text-sm text-brand">¡Perfil actualizado correctamente!</p>}
-
-          <button
-            type="submit"
-            className="w-full rounded-xl bg-brand py-3 text-sm font-bold text-[#07130b] transition hover:brightness-110"
-          >
-            Guardar cambios
-          </button>
-        </form>
+        <dl className="space-y-4">
+          <div>
+            <dt className="text-sm font-medium text-[#858B93]">Nombre artístico</dt>
+            <dd className="mt-1 text-base font-semibold text-white">{user?.artistName || 'Sin perfil'}</dd>
+          </div>
+          <div>
+            <dt className="text-sm font-medium text-[#858B93]">Género principal</dt>
+            <dd className="mt-1 text-base font-semibold text-white">{user?.genre || '—'}</dd>
+          </div>
+        </dl>
       </div>
 
       {/* SECCIÓN ABAJO: Botón "Subir canción" y Panel de Carga */}
