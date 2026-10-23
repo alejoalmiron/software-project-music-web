@@ -11,7 +11,8 @@ export default function ArtistProfile() {
   const [isUploading, setIsUploading] = useState(false)
   const [title, setTitle] = useState('')
   const [songGenre, setSongGenre] = useState(GENRES[0] || '')
-  const [releaseDate, setReleaseDate] = useState('')
+  const [minutes, setMinutes] = useState('')
+  const [seconds, setSeconds] = useState('')
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState('')
   const [successSong, setSuccessSong] = useState(false)
@@ -19,19 +20,35 @@ export default function ArtistProfile() {
 
 
   function handleImageChange(e) {
-    const file = e.target.files[0]
-    if (file) {
-      setImageFile(file)
-      setImagePreview(URL.createObjectURL(file))
+  const file = e.target.files[0]
+  if (!file) return
+  setImageFile(file)
+
+  // Guardamos la imagen como texto (reducida) para que no se pierda al recargar
+  const reader = new FileReader()
+  reader.onload = () => {
+    const img = new Image()
+    img.onload = () => {
+      const scale = Math.min(1, 640 / Math.max(img.width, img.height))
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.round(img.width * scale)
+      canvas.height = Math.round(img.height * scale)
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+      setImagePreview(canvas.toDataURL('image/jpeg', 0.85))
     }
+    img.src = reader.result
   }
+  reader.readAsDataURL(file)
+}
 
   function handleSongSubmit(e) {
     e.preventDefault()
     setErrorSong('')
     setSuccessSong(false)
 
-    if (!title.trim() || !releaseDate || !imagePreview) {
+    const duration = (Number(minutes) || 0) * 60 + (Number(seconds) || 0)
+
+    if (!title.trim() || duration <= 0 || !imagePreview) {
       setErrorSong('Completá todos los campos y seleccioná una imagen.')
       return
     }
@@ -40,7 +57,7 @@ export default function ArtistProfile() {
       saveSongDraft({
         title: title.trim(),
         genre: songGenre,
-        releaseDate,
+        duration,
         image: imagePreview,
         artist: user?.artistName || user?.name || 'Artista',
         artistEmail: user?.email,
@@ -48,7 +65,8 @@ export default function ArtistProfile() {
 
       setSuccessSong(true)
       setTitle('')
-      setReleaseDate('')
+      setMinutes('')
+      setSeconds('')
       setImageFile(null)
       setImagePreview('')
     } catch (err) {
@@ -147,16 +165,30 @@ export default function ArtistProfile() {
                 </select>
               </label>
 
-              <label className="block">
-                <span className="mb-1 block text-sm font-medium text-[#D7D9DC]">Fecha de lanzamiento</span>
-                <input
-                  type="date"
-                  className="w-full rounded-xl border border-line bg-[#0D0F12] px-4 py-2.5 text-sm text-white outline-none focus:border-brand text-white"
-                  value={releaseDate}
-                  onChange={(e) => setReleaseDate(e.target.value)}
-                  required
-                />
-              </label>
+              <div className="block">
+                <span className="mb-1 block text-sm font-medium text-[#D7D9DC]">Duración</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    max="59"
+                    className="w-full rounded-xl border border-line bg-[#0D0F12] px-4 py-2.5 text-sm text-white outline-none focus:border-brand"
+                    placeholder="Min"
+                    value={minutes}
+                    onChange={(e) => setMinutes(e.target.value)}
+                  />
+                  <span className="text-[#858B93]">:</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="59"
+                    className="w-full rounded-xl border border-line bg-[#0D0F12] px-4 py-2.5 text-sm text-white outline-none focus:border-brand"
+                    placeholder="Seg"
+                    value={seconds}
+                    onChange={(e) => setSeconds(e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
 
             <label className="block">
