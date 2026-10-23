@@ -1,11 +1,17 @@
 import { useState } from 'react'
 import { Mic, Upload, CheckCircle2, Music } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
-import { saveSongDraft } from '../services/songStorage.js'
+import { saveSongDraft, getPublisherSongs } from '../services/songStorage.js'
 import { GENRES } from '../data/songs.js'
+
+function formatDuration(seconds) {
+  if (!seconds) return '—'
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
+}
 
 export default function ArtistProfile() {
   const { user } = useAuth()
+  const mySongs = getPublisherSongs(user?.email)
   
   // Estados para el panel de "Subir canción" que aparece abajo
   const [isUploading, setIsUploading] = useState(false)
@@ -212,6 +218,40 @@ export default function ArtistProfile() {
             </button>
           </form>
         )}
+
+        <div className="mt-8 border-t border-line pt-6">
+          <h3 className="mb-4 text-base font-semibold text-white">Mis canciones</h3>
+
+          {mySongs.length === 0 ? (
+            <p className="text-sm text-[#858B93]">Todavía no cargaste ninguna canción.</p>
+          ) : (
+            <ul className="space-y-3">
+              {mySongs.map((song) => (
+                <li
+                  key={song.id}
+                  className="flex items-center gap-4 rounded-xl border border-line bg-[#0D0F12] p-3"
+                >
+                  <img src={song.image} alt="" className="h-14 w-14 rounded-lg object-cover" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-white">{song.title}</p>
+                    <p className="text-xs text-[#858B93]">
+                      {song.genre} · {formatDuration(song.duration)}
+                    </p>
+                  </div>
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                      song.status === 'publicada'
+                        ? 'bg-brand/10 text-brand'
+                        : 'bg-white/10 text-[#B4BAC1]'
+                    }`}
+                  >
+                    {song.status === 'publicada' ? 'Publicada' : 'Borrador'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   )
