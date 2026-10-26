@@ -119,3 +119,13 @@ export function addSongToPlaylist(playlistId, song, userId) {
   savePlaylists(updatedPlaylists)
   return updatedPlaylists
 }
+
+export function removeSongFromAllPlaylists(songId) {
+  const playlists = readAllPlaylists()
+  const updatedPlaylists = playlists.map((playlist) => ({
+    ...playlist,
+    songs: (playlist.songs ?? []).filter((song) => song.id !== songId),
+  }))
+  savePlaylists(updatedPlaylists)
+  return updatedPlaylists
+}

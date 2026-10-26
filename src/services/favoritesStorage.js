@@ -31,6 +31,19 @@ export function getFavoriteSongIds(userId) {
   return songIds
 }
 
+export function removeSongIdFromAllFavorites(songId) {
+  const favorites = readAllFavorites()
+  const updated = Object.fromEntries(
+    Object.entries(favorites).map(([userId, songIds]) => [
+      userId,
+      Array.isArray(songIds) ? songIds.filter((id) => id !== songId) : songIds,
+    ]),
+  )
+  localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(updated))
+  window.dispatchEvent(new Event(FAVORITES_CHANGED_EVENT))
+  return updated
+}
+
 export function saveFavoriteSongIds(userId, songIds) {
   if (!userId) {
     throw new Error('Tenés que iniciar sesión para guardar canciones favoritas.')
