@@ -1,9 +1,19 @@
 import { songs } from '../data/songs.js'
 const SONGS_KEY = 'soundwave.publisher_songs'
 
-export function publishSong(songId) {
+function readPublisherSongs() {
   const saved = localStorage.getItem(SONGS_KEY)
-  const allSongs = saved ? JSON.parse(saved) : []
+  if (!saved) return []
+  try {
+    const parsed = JSON.parse(saved)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+export function publishSong(songId) {
+  const allSongs = readPublisherSongs()
 
   const updatedSongs = allSongs.map((song) =>
     song.id === songId
@@ -12,6 +22,26 @@ export function publishSong(songId) {
   )
 
   localStorage.setItem(SONGS_KEY, JSON.stringify(updatedSongs))
+}
+
+export function deletePublishedSong(songId, artistEmail) {
+  if (!artistEmail) {
+    throw new Error('Tenés que iniciar sesión para eliminar una canción.')
+  }
+
+  const allSongs = readPublisherSongs()
+  const song = allSongs.find((item) => item.id === songId)
+
+  if (!song || song.artistEmail !== artistEmail) {
+    throw new Error('No se encontró una canción propia para eliminar.')
+  }
+  if (song.status !== 'publicada') {
+    throw new Error('Solo se pueden eliminar canciones publicadas.')
+  }
+
+  const updatedSongs = allSongs.filter((item) => item.id !== songId)
+  localStorage.setItem(SONGS_KEY, JSON.stringify(updatedSongs))
+  return song
 }
 
 export function getPublisherSongs(artistEmail) {

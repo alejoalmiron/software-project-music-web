@@ -92,6 +92,16 @@ export const PlayerProvider = ({ children }) => {
     }
   };
 
+  const removeSongFromPlayback = (songId) => {
+    setQueue((currentQueue) => currentQueue.filter((song) => song.id !== songId))
+    setCurrentSong((playing) => {
+      if (playing?.id !== songId) return playing
+      setIsPlaying(false)
+      setCurrentTime(0)
+      return null
+    })
+  }
+
   // Indican si hay canción anterior / siguiente (habilitan o deshabilitan los botones del reproductor)
   const currentIndex = queue.findIndex((s) => s.id === currentSong?.id);
   const hasPrevious = currentIndex > 0;
@@ -149,6 +159,7 @@ export const PlayerProvider = ({ children }) => {
         hasPrevious,
         togglePlay,
         seek,
+        removeSongFromPlayback,
       }}
     >
       {children}

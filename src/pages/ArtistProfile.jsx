@@ -1,7 +1,10 @@
 import { useState } from 'react'
-import { Mic, Upload, CheckCircle2, Music } from 'lucide-react'
+import { Mic, Upload, CheckCircle2, Trash2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
-import { saveSongDraft, getPublisherSongs, publishSong  } from '../services/songStorage.js'
+import { usePlayer } from '../context/PlayerContext.jsx'
+import { saveSongDraft, getPublisherSongs, publishSong, deletePublishedSong } from '../services/songStorage.js'
+import { removeSongFromAllPlaylists } from '../services/playlistStorage.js'
+import { removeSongIdFromAllFavorites } from '../services/favoritesStorage.js'
 import { GENRES } from '../data/songs.js'
 
 function formatDuration(seconds) {
@@ -11,9 +14,13 @@ function formatDuration(seconds) {
 
 export default function ArtistProfile() {
   const { user } = useAuth()
+  const { removeSongFromPlayback } = usePlayer()
   const mySongs = getPublisherSongs(user?.email)
   const [confirmingId, setConfirmingId] = useState(null)
+  const [deletingId, setDeletingId] = useState(null)
   const [publishedTitle, setPublishedTitle] = useState('')
+  const [deletedTitle, setDeletedTitle] = useState('')
+  const [deleteError, setDeleteError] = useState('')
   
   // Estados para el panel de "Subir canción" que aparece abajo
   const [isUploading, setIsUploading] = useState(false)
@@ -86,6 +93,23 @@ export default function ArtistProfile() {
     publishSong(song.id)
     setConfirmingId(null)
     setPublishedTitle(song.title)
+    setDeletedTitle('')
+    setDeleteError('')
+  }
+
+  function handleDeletePublished(song) {
+    setDeleteError('')
+    try {
+      deletePublishedSong(song.id, user?.email)
+      removeSongFromAllPlaylists(song.id)
+      removeSongIdFromAllFavorites(song.id)
+      removeSongFromPlayback(song.id)
+      setDeletingId(null)
+      setDeletedTitle(song.title)
+      setPublishedTitle('')
+    } catch (err) {
+      setDeleteError(err.message || 'No se pudo eliminar la canción.')
+    }
   }
 
   return (
@@ -235,6 +259,17 @@ export default function ArtistProfile() {
               <span>¡"{publishedTitle}" ya está publicada! Los oyentes pueden buscarla y escucharla.</span>
             </div>
           )}
+          {deletedTitle && (
+            <div className="mb-4 flex items-center gap-2 rounded-xl bg-brand/10 p-3 text-sm text-brand">
+              <CheckCircle2 size={18} />
+              <span>"{deletedTitle}" se eliminó y ya no está disponible para los oyentes.</span>
+            </div>
+          )}
+          {deleteError && (
+            <p role="alert" className="mb-4 text-sm text-red-300">
+              {deleteError}
+            </p>
+          )}
           {mySongs.length === 0 ? (
             <p className="text-sm text-[#858B93]">Aún no hay canciones cargadas.</p>
           ) : (
@@ -265,11 +300,30 @@ export default function ArtistProfile() {
                       type="button"
                       onClick={() => {
                         setConfirmingId(song.id)
+                        setDeletingId(null)
                         setPublishedTitle('')
+                        setDeletedTitle('')
+                        setDeleteError('')
                       }}
                       className="rounded-xl bg-brand px-4 py-1.5 text-xs font-bold text-[#07130b] transition hover:brightness-110"
                     >
                       Publicar
+                    </button>
+                  )}
+                  {song.status === 'publicada' && deletingId !== song.id && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDeletingId(song.id)
+                        setConfirmingId(null)
+                        setPublishedTitle('')
+                        setDeletedTitle('')
+                        setDeleteError('')
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-red-400/30 px-4 py-1.5 text-xs font-bold text-red-300 transition hover:border-red-400/60 hover:bg-red-400/10"
+                    >
+                      <Trash2 size={14} />
+                      Eliminar
                     </button>
                   )}
 
@@ -289,6 +343,30 @@ export default function ArtistProfile() {
                         <button
                           type="button"
                           onClick={() => setConfirmingId(null)}
+                          className="rounded-xl bg-white/10 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-white/20"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {deletingId === song.id && (
+                    <div className="flex w-full flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
+                      <p className="text-sm text-[#D7D9DC]">
+                        ¿Eliminar "{song.title}"? Dejará de estar disponible para los oyentes.
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleDeletePublished(song)}
+                          className="rounded-xl bg-red-400 px-4 py-1.5 text-xs font-bold text-[#1a0a0a] transition hover:brightness-110"
+                        >
+                          Confirmar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeletingId(null)}
                           className="rounded-xl bg-white/10 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-white/20"
                         >
                           Cancelar
