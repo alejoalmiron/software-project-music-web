@@ -1,4 +1,5 @@
 import { Music2 } from 'lucide-react'
+import ArtistLink from '../artists/ArtistLink.jsx'
 import FavoriteButton from './FavoriteButton.jsx'
 
 export default function SongCard({ song, onPlay }) {
@@ -23,8 +24,10 @@ export default function SongCard({ song, onPlay }) {
           </span>
         </div>
         <h3 className="mt-3 truncate text-sm font-semibold">{song.title}</h3>
-        <p className="mt-1 truncate text-xs text-[#858B93]">{song.artist}</p>
       </button>
+      <p className="mt-1 truncate text-xs text-[#858B93]">
+        <ArtistLink artist={song.artist} />
+      </p>
       <FavoriteButton song={song} />
     </article>
   )
