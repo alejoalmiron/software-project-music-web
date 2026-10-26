@@ -18,6 +18,7 @@ import {
 } from '../services/playlistStorage.js'
 import { usePlayer } from '../context/PlayerContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
+import ArtistLink from '../components/artists/ArtistLink.jsx'
 import FavoriteButton from '../components/songs/FavoriteButton.jsx'
 
 function PlaylistNameModal({
@@ -294,7 +295,9 @@ export default function Library() {
                     <p className="truncate text-sm font-semibold text-white group-hover:text-brand">
                       {song.title}
                     </p>
-                    <p className="truncate text-xs text-[#858B93]">{song.artist}</p>
+                    <p className="truncate text-xs text-[#858B93]">
+                      <ArtistLink artist={song.artist} />
+                    </p>
                   </div>
                 </div>
 

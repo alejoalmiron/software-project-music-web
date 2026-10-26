@@ -13,6 +13,7 @@ import ProtectedRoute from './routes/ProtectedRoute.jsx'
 import { ROLES } from './utils/userHelpers.js'
 import Library from './pages/Library.jsx'
 import ArtistProfile from './pages/ArtistProfile.jsx'
+import PublicArtistProfile from './pages/PublicArtistProfile.jsx'
 
 function NotFoundRedirect() {
   return <Navigate to="/login" replace />
@@ -34,6 +35,7 @@ export default function App() {
                   <Route index element={<Dashboard />} />
                   <Route path="library" element={<Library />} />
                   <Route path="favorites" element={<Favorites />} />
+                  <Route path="artist/:artistSlug" element={<PublicArtistProfile />} />
                   <Route element={<ProtectedRoute roles={[ROLES.OYENTE]} />}>
                     <Route path="account" element={<Account />} />
                   </Route>

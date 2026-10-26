@@ -13,6 +13,7 @@ import {
   ListMusic,
   Volume2,
 } from 'lucide-react';
+import ArtistLink from '../artists/ArtistLink.jsx';
 import { getPlaylists, addSongToPlaylist } from '../../services/playlistStorage.js';
 
 export default function MusicPlayer() {
@@ -198,7 +199,9 @@ export default function MusicPlayer() {
                             <p className={`truncate text-xs ${isCurrent ? 'font-bold text-brand' : 'font-medium text-white'}`}>
                               {song.title}
                             </p>
-                            <p className="text-[10px] text-[#858B93] truncate">{song.artist}</p>
+                            <p className="text-[10px] text-[#858B93] truncate">
+                              <ArtistLink artist={song.artist} />
+                            </p>
                           </div>
                         </div>
 
@@ -222,7 +225,9 @@ export default function MusicPlayer() {
         />
         <div className="truncate">
           <p className="truncate text-sm font-semibold">{currentSong.title}</p>
-          <p className="truncate text-xs text-[#858B93]">{currentSong.artist}</p>
+          <p className="truncate text-xs text-[#858B93]">
+            <ArtistLink artist={currentSong.artist} />
+          </p>
         </div>
       </div>
 
