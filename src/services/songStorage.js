@@ -68,6 +68,18 @@ export function getCatalogSongs() {
   }
 }
 
+// =========================================================================
+// >>> NUEVO: Retorna las canciones publicadas ordenadas por fecha reciente <<<
+// =========================================================================
+export function getRecentPublishedSongs(limit = 4) {
+  const allSongs = readPublisherSongs()
+  return allSongs
+    .filter((song) => song.status === 'publicada')
+    .sort((a, b) => new Date(b.publishedAt || b.createdAt || 0) - new Date(a.publishedAt || a.createdAt || 0))
+    .slice(0, limit)
+}
+// =========================================================================
+
 export function saveSongDraft(songData) {
   const saved = localStorage.getItem(SONGS_KEY)
   const allSongs = saved ? JSON.parse(saved) : []
