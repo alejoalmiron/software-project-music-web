@@ -125,6 +125,7 @@ Cualquier otra cuenta se crea desde "Crear cuenta". Los oyentes nuevos empiezan 
 - Cada banner muestra un solo anuncio a la vez: el que esté **Activo**.
 - Los anuncios los ven únicamente los **oyentes con plan Free**. No los ven el administrador, los publicadores ni los oyentes Premium.
 - La aplicación ya trae **4 anuncios precargados** (2 por banner), de los cuales uno por banner está activo desde el inicio. Así los banners se ven apenas se abre la aplicación, sin cargar nada.
+- Al finalizar una canción con otra canción pendiente en la cola, los oyentes Free escuchan un anuncio de audio de 10 segundos antes de que continúe la reproducción. Durante el anuncio no se muestran controles. Los oyentes Premium continúan directamente con la siguiente canción.
 
 ### Cómo gestionar los anuncios (administrador)
 

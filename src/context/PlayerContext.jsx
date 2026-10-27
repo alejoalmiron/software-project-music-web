@@ -1,7 +1,8 @@
 // src/context/PlayerContext.jsx
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext.jsx';
 import { getCatalogSongs } from '../services/songStorage.js'; // Catálogo: precargadas + publicadas
+import { showsAds } from '../utils/userHelpers.js';
 
 const PlayerContext = createContext();
 
@@ -11,11 +12,14 @@ export const PlayerProvider = ({ children }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [queue, setQueue] = useState([]); // canciones de la lista que se está escuchando (ej: la playlist)
+  const [isAdPlaying, setIsAdPlaying] = useState(false);
+  const adCompletionHandled = useRef(false);
 
   // Reproducir una canción individual (Si viene de una playlist conserva esa lista, si es suelta genera por género)
   // Al tocar una canción (desde donde sea): se arma la cola de ese lugar y la canción suena desde cero.
   // Si se toca la misma canción que ya suena, vuelve a empezar.
   const playSong = (song, list = []) => {
+    if (isAdPlaying) return;
     if (list && list.length > 0) {
       // Viene de una lista (ej: playlist): la cola es exactamente esa lista
       setQueue(list);
@@ -39,7 +43,7 @@ export const PlayerProvider = ({ children }) => {
   // Las canciones anteriores quedan arriba, la actual suena y las siguientes abajo.
   // =========================================================================
   const playFromQueue = (song) => {
-    if (!song) return;
+    if (!song || isAdPlaying) return;
     setCurrentSong(song);
     setIsPlaying(true);
     setCurrentTime(0);
@@ -48,14 +52,14 @@ export const PlayerProvider = ({ children }) => {
 
   // 2. Alternar entre Play y Pausa
   const togglePlay = () => {
-    if (currentSong) {
+    if (currentSong && !isAdPlaying) {
       setIsPlaying(!isPlaying);
     }
   };
 
   // Reproducir una playlist desde su botón "Reproducir"
   const playList = (list) => {
-    if (!list || list.length === 0) return;
+    if (!list || list.length === 0 || isAdPlaying) return;
     // Mantiene en orden EXACTO las canciones de la playlist
     setQueue(list);
     setCurrentSong(list[0]);
@@ -64,7 +68,7 @@ export const PlayerProvider = ({ children }) => {
   };
 
   // Pasar a la siguiente canción de la cola.
-  const playNext = () => {
+  const advanceQueue = () => {
     if (!currentSong) return;
 
     const index = queue.findIndex((s) => s.id === currentSong.id);
@@ -81,8 +85,34 @@ export const PlayerProvider = ({ children }) => {
     }
   };
 
+  const playNext = () => {
+    if (isAdPlaying) return;
+    advanceQueue();
+  };
+
+  const finishAd = () => {
+    if (!isAdPlaying || adCompletionHandled.current) return;
+    adCompletionHandled.current = true;
+    setIsAdPlaying(false);
+    advanceQueue();
+  };
+
+  const playNextWithAd = () => {
+    const index = queue.findIndex((song) => song.id === currentSong?.id);
+    const hasNextSong = index >= 0 && index < queue.length - 1;
+    if (hasNextSong && showsAds(user)) {
+      adCompletionHandled.current = false;
+      setIsPlaying(false);
+      setIsAdPlaying(true);
+      setCurrentTime(0);
+      return;
+    }
+    advanceQueue();
+  };
+
   // Volver a la canción anterior de la cola
   const playPrevious = () => {
+    if (isAdPlaying) return;
     const index = queue.findIndex((s) => s.id === currentSong?.id);
     const previous = index > 0 ? queue[index - 1] : null;
     if (previous) {
@@ -93,6 +123,7 @@ export const PlayerProvider = ({ children }) => {
   };
 
   const removeSongFromPlayback = (songId) => {
+    if (isAdPlaying) return;
     setQueue((currentQueue) => currentQueue.filter((song) => song.id !== songId))
     setCurrentSong((playing) => {
       if (playing?.id !== songId) return playing
@@ -120,13 +151,14 @@ export const PlayerProvider = ({ children }) => {
       setCurrentSong(null);   
       setIsPlaying(false);   
       setCurrentTime(0);   
+      setIsAdPlaying(false);
     } 
   }, [user]);      
 
   // 5. Simulación de la barra de progreso (avanza 1 segundo cada 1000ms)
   useEffect(() => {
     let interval = null;
-    if (isPlaying && currentSong) {
+    if (isPlaying && currentSong && !isAdPlaying) {
       interval = setInterval(() => {
         setCurrentTime((prevTime) => prevTime + 1);
       }, 1000);
@@ -134,14 +166,14 @@ export const PlayerProvider = ({ children }) => {
       clearInterval(interval);
     }
     return () => clearInterval(interval);
-  }, [isPlaying, currentSong]);
+  }, [isPlaying, currentSong, isAdPlaying]);
 
-  // 6. Al terminar la canción, suena la siguiente de la cola (o se detiene si era la última)
+  // 6. Al terminar la canción, los oyentes Free escuchan un anuncio antes de la siguiente.
   useEffect(() => {
     if (currentSong && isPlaying && currentTime >= currentSong.duration) {
-      playNext();
+      playNextWithAd();
     }
-  }, [currentTime]);
+  }, [currentSong, currentTime, isPlaying]);
 
   return (
     <PlayerContext.Provider
@@ -149,6 +181,8 @@ export const PlayerProvider = ({ children }) => {
         currentSong,
         isPlaying,
         currentTime,
+        isAdPlaying,
+        finishAd,
         queue,
         playSong,
         playFromQueue, // <<< AGREGADO NUEVO: exportada para que la use el reproductor / cola

@@ -20,6 +20,8 @@ export default function MusicPlayer() {
   const {
     currentSong,
     isPlaying,
+    isAdPlaying,
+    finishAd,
     togglePlay,
     currentTime,
     seek,
@@ -39,9 +41,48 @@ export default function MusicPlayer() {
   const [queueOpen, setQueueOpen] = useState(false);
   const [playlists, setPlaylists] = useState([]);
   const [addedMessage, setAddedMessage] = useState('');
+  const [adCurrentTime, setAdCurrentTime] = useState(0);
+  const [adPlaybackError, setAdPlaybackError] = useState(false);
 
   const menuRef = useRef(null);
   const queueRef = useRef(null);
+  const audioRef = useRef(null);
+  const fallbackTimerRef = useRef(null);
+
+  useEffect(() => {
+    if (!isAdPlaying || !audioRef.current) return undefined;
+    const audio = audioRef.current;
+    setAdCurrentTime(0);
+    setAdPlaybackError(false);
+    audio.currentTime = 0;
+    audio.play().catch((error) => {
+      console.error('No se pudo reproducir el anuncio de audio:', error);
+      setAdPlaybackError(true);
+      fallbackTimerRef.current = window.setTimeout(() => {
+        fallbackTimerRef.current = null;
+        finishAd();
+      }, 10_000);
+    });
+
+    return () => {
+      audio.pause();
+      if (fallbackTimerRef.current !== null) {
+        window.clearTimeout(fallbackTimerRef.current);
+        fallbackTimerRef.current = null;
+      }
+    };
+  }, [isAdPlaying]);
+
+  const handleAdAudioError = (event) => {
+    console.error('No se pudo cargar el anuncio de audio:', event.currentTarget.error);
+    setAdPlaybackError(true);
+    if (fallbackTimerRef.current === null) {
+      fallbackTimerRef.current = window.setTimeout(() => {
+        fallbackTimerRef.current = null;
+        finishAd();
+      }, 10_000);
+    }
+  };
 
   // Cargar playlists cada vez que se abre el menú
   const handleToggleMenu = () => {
@@ -95,6 +136,47 @@ export default function MusicPlayer() {
 
   // Si no hay canción seleccionada, no se muestra nada
   if (!currentSong) return null;
+
+  if (isAdPlaying) {
+    return (
+      <div
+        aria-label="Anuncio de audio"
+        className="fixed bottom-0 left-0 right-0 z-50 h-[88px] border-t border-line bg-[#121418] px-6 py-3 text-white shadow-lg md:left-[252px]"
+      >
+        <audio
+          ref={audioRef}
+          src={`${import.meta.env.BASE_URL}audio/free-ad.wav`}
+          preload="auto"
+          onTimeUpdate={(event) => setAdCurrentTime(event.currentTarget.currentTime)}
+          onEnded={finishAd}
+          onError={handleAdAudioError}
+        />
+        <div className="mx-auto flex h-full max-w-2xl flex-col justify-center gap-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-semibold">Anuncio de SoundWave</span>
+            <span className="text-xs text-[#A1A7AF]" aria-live="polite">
+              {adPlaybackError
+                ? 'El anuncio no pudo reproducirse'
+                : `${Math.max(0, 10 - Math.floor(adCurrentTime))} segundos`}
+            </span>
+          </div>
+          <div
+            role="progressbar"
+            aria-label="Progreso del anuncio"
+            aria-valuemin={0}
+            aria-valuemax={10}
+            aria-valuenow={Math.min(10, Math.floor(adCurrentTime))}
+            className="h-1 overflow-hidden rounded-full bg-[#202329]"
+          >
+            <div
+              className="h-full rounded-full bg-brand"
+              style={{ width: `${Math.min(100, (adCurrentTime / 10) * 100)}%` }}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Formatear segundos (ej: 125s -> "2:05")
   const formatTime = (seconds) => {
