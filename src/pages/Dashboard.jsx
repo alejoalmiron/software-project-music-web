@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Heart, LogOut, Music2, Mic } from 'lucide-react'
+import { Heart, LogOut, Music2, Mic, Sparkles } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { usePlayer } from '../context/PlayerContext.jsx'
 import { GENRES } from '../data/songs.js'
-import { getCatalogSongs } from '../services/songStorage.js'
+import { getCatalogSongs, getRecentPublishedSongs } from '../services/songStorage.js'
 import SongCard from '../components/songs/SongCard.jsx'
-
 
 export default function Dashboard() {
   const { user, logout, createArtistProfile } = useAuth()
@@ -45,101 +44,103 @@ export default function Dashboard() {
   if (isPublisherWithoutProfile) {
     return (
       <>
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={logout}
-          className="inline-flex items-center gap-2 rounded-full border border-line bg-[#15181C] px-4 py-2.5 text-xs font-semibold text-[#B4BAC1] transition hover:border-[#454C54] hover:text-white"
-        >
-          <LogOut size={15} />
-          Cerrar sesión
-        </button>
-      </div>
-      
-      <div className="mx-auto max-w-lg rounded-2xl border border-line bg-surface p-8 shadow-2xl mt-10">
-        <div className="mb-6 flex items-center gap-3">
-          
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand/10 text-brand">
-            <Mic size={24} />
-          </span>
-          <div>
-            <h1 className="font-display text-2xl font-bold">Completá tu perfil de artista</h1>
-            <p className="text-sm text-[#858B93]">Bienvenido, {user.name}. Configurá tu identidad.</p>
-          </div>
-        </div>
-
-        <form onSubmit={handleProfileSubmit} className="space-y-4">
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-[#D7D9DC]">Nombre artístico</span>
-            <input
-              type="text"
-              className={`w-full rounded-xl border bg-[#0D0F12] px-4 py-3 text-sm text-white outline-none focus:border-brand ${
-                nameError ? 'border-red-400' : 'border-line'
-              }`}
-              placeholder="Ej: Banda Sonica"
-              value={artistNameInput}
-              onChange={(e) => {
-                setArtistNameInput(e.target.value)
-                setNameError('')
-              }}
-            />
-            {nameError && <span className="mt-1.5 block text-xs text-red-300">{nameError}</span>}
-          </label>
-
-           <div>
-            <span className="mb-2 block text-sm font-medium text-[#D7D9DC]">Género principal</span>
-            <div className="flex flex-wrap gap-2">
-              {GENRES.map((genre) => {
-                const selected = genreInput === genre
-                return (
-                  <button
-                    key={genre}
-                    type="button"
-                    onClick={() => {
-                      setGenreInput(genre)
-                      setGenreError('')
-                    }}
-                    aria-pressed={selected}
-                    className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                      selected
-                        ? 'border-brand bg-brand text-[#07130b]'
-                        : 'border-line text-[#D7D9DC] hover:bg-white/5'
-                    }`}
-                  >
-                    {genre}
-                  </button>
-                )
-              })}
-            </div>
-            {genreError && <p className="mt-1.5 text-xs text-red-300">{genreError}</p>}
-          </div>
-
-          {profileError && (
-            <p className="rounded-lg border border-red-400/20 bg-red-400/10 px-3 py-2 text-sm text-red-300">
-              {profileError}
-            </p>
-          )}
-
+        <div className="flex justify-end">
           <button
-            type="submit"
-            className="w-full rounded-xl bg-brand py-3 text-sm font-bold text-[#07130b] transition hover:brightness-110"
+            type="button"
+            onClick={logout}
+            className="inline-flex items-center gap-2 rounded-full border border-line bg-[#15181C] px-4 py-2.5 text-xs font-semibold text-[#B4BAC1] transition hover:border-[#454C54] hover:text-white"
           >
-            Crear perfil
+            <LogOut size={15} />
+            Cerrar sesión
           </button>
-        </form>
+        </div>
+        
+        <div className="mx-auto max-w-lg rounded-2xl border border-line bg-surface p-8 shadow-2xl mt-10">
+          <div className="mb-6 flex items-center gap-3">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand/10 text-brand">
+              <Mic size={24} />
+            </span>
+            <div>
+              <h1 className="font-display text-2xl font-bold">Completá tu perfil de artista</h1>
+              <p className="text-sm text-[#858B93]">Bienvenido, {user.name}. Configurá tu identidad.</p>
+            </div>
+          </div>
 
-      </div>
+          <form onSubmit={handleProfileSubmit} className="space-y-4">
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-[#D7D9DC]">Nombre artístico</span>
+              <input
+                type="text"
+                className={`w-full rounded-xl border bg-[#0D0F12] px-4 py-3 text-sm text-white outline-none focus:border-brand ${
+                  nameError ? 'border-red-400' : 'border-line'
+                }`}
+                placeholder="Ej: Banda Sonica"
+                value={artistNameInput}
+                onChange={(e) => {
+                  setArtistNameInput(e.target.value)
+                  setNameError('')
+                }}
+              />
+              {nameError && <span className="mt-1.5 block text-xs text-red-300">{nameError}</span>}
+            </label>
+
+            <div>
+              <span className="mb-2 block text-sm font-medium text-[#D7D9DC]">Género principal</span>
+              <div className="flex flex-wrap gap-2">
+                {GENRES.map((genre) => {
+                  const selected = genreInput === genre
+                  return (
+                    <button
+                      key={genre}
+                      type="button"
+                      onClick={() => {
+                        setGenreInput(genre)
+                        setGenreError('')
+                      }}
+                      aria-pressed={selected}
+                      className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                        selected
+                          ? 'border-brand bg-brand text-[#07130b]'
+                          : 'border-line text-[#D7D9DC] hover:bg-white/5'
+                      }`}
+                    >
+                      {genre}
+                    </button>
+                  )
+                })}
+              </div>
+              {genreError && <p className="mt-1.5 text-xs text-red-300">{genreError}</p>}
+            </div>
+
+            {profileError && (
+              <p className="rounded-lg border border-red-400/20 bg-red-400/10 px-3 py-2 text-sm text-red-300">
+                {profileError}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              className="w-full rounded-xl bg-brand py-3 text-sm font-bold text-[#07130b] transition hover:brightness-110"
+            >
+              Crear perfil
+            </button>
+          </form>
+        </div>
       </>
     )
   }
 
   // --- RESTO DEL DASHBOARD NORMAL (Oyentes, Admins o Publicadores con perfil creado) ---
-  
-const catalog = getCatalogSongs()
-const recommendations = GENRES.map((genre) => ({
-  genre,
-  songs: catalog.filter((song) => song.genre === genre),
-}))
+  const catalog = getCatalogSongs()
+
+  // Canciones recién publicadas (máximo 4, ordenadas por fecha descendente)
+  const recentPublishedSongs = getRecentPublishedSongs(4)
+
+  const recommendations = GENRES.map((genre) => ({
+    genre,
+    songs: catalog.filter((song) => song.genre === genre),
+  }))
+
   const searchQuery = searchParams.get('search')?.trim() || ''
   const hasSearched = Boolean(searchQuery)
 
@@ -218,8 +219,34 @@ const recommendations = GENRES.map((genre) => ({
           )}
         </section>
       ) : (
-        /* Si no hay búsqueda: mostramos recomendaciones normales */
+        /* Si no hay búsqueda: mostramos Nuevo (condicional) + Recomendaciones */
         <div className="space-y-10">
+          
+          {/* SECCIÓN "NUEVO": Solo se renderiza si existen canciones publicadas */}
+          {recentPublishedSongs.length > 0 && (
+            <section>
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles size={20} className="text-brand" />
+                  <h2 className="font-display text-xl font-bold text-white">
+                    Nuevo
+                  </h2>
+                </div>
+                
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
+                {recentPublishedSongs.map((song) => (
+                  <SongCard
+                    key={song.id}
+                    song={song}
+                    onPlay={() => playSong(song)}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Canciones predeterminadas / Recomendaciones por género */}
           {recommendations.map((section) => (
             <section key={section.genre}>
               <div className="mb-4 flex items-center justify-between">
