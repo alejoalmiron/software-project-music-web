@@ -44,6 +44,14 @@ export function deletePublishedSong(songId, artistEmail) {
   return song
 }
 
+// Las últimas canciones publicadas (la más reciente primero), para la sección "Nuevo"
+export function getNewSongs(limit = 4) {
+  return readPublisherSongs()
+    .filter((song) => song.status === 'publicada')
+    .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
+    .slice(0, limit)
+}
+
 export function getPublisherSongs(artistEmail) {
   const saved = localStorage.getItem(SONGS_KEY)
   if (!saved) return []

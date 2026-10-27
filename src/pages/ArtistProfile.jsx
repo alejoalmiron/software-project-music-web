@@ -32,6 +32,7 @@ export default function ArtistProfile() {
   const [imagePreview, setImagePreview] = useState('')
   const [successSong, setSuccessSong] = useState(false)
   const [errorSong, setErrorSong] = useState('')
+  const [fileInputKey, setFileInputKey] = useState(0)
 
 
   function handleImageChange(e) {
@@ -84,6 +85,7 @@ export default function ArtistProfile() {
       setSeconds('')
       setImageFile(null)
       setImagePreview('')
+      setFileInputKey((key) => key + 1)
     } catch (err) {
       setErrorSong('No se pudo guardar la canción como borrador.')
     }
@@ -231,7 +233,7 @@ export default function ArtistProfile() {
 
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-[#D7D9DC]">Archivo de imagen (Carátula)</span>
-              <input type="file" accept="image/*" onChange={handleImageChange} className="text-sm text-[#858B93]" required />
+              <input key={fileInputKey} type="file" accept="image/*" onChange={handleImageChange} className="text-sm text-[#858B93]" required />
             </label>
 
             {imagePreview && (

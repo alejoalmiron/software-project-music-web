@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { usePlayer } from '../context/PlayerContext.jsx'
 import { GENRES } from '../data/songs.js'
-import { getCatalogSongs } from '../services/songStorage.js'
+import { getCatalogSongs, getNewSongs } from '../services/songStorage.js'
 import SongCard from '../components/songs/SongCard.jsx'
 
 
@@ -136,9 +136,11 @@ export default function Dashboard() {
   // --- RESTO DEL DASHBOARD NORMAL (Oyentes, Admins o Publicadores con perfil creado) ---
   
 const catalog = getCatalogSongs()
+const newSongs = getNewSongs()
+const newSongIds = new Set(newSongs.map((song) => song.id))
 const recommendations = GENRES.map((genre) => ({
   genre,
-  songs: catalog.filter((song) => song.genre === genre),
+  songs: catalog.filter((song) => song.genre === genre && !newSongIds.has(song.id)),
 }))
   const searchQuery = searchParams.get('search')?.trim() || ''
   const hasSearched = Boolean(searchQuery)
@@ -220,6 +222,18 @@ const recommendations = GENRES.map((genre) => ({
       ) : (
         /* Si no hay búsqueda: mostramos recomendaciones normales */
         <div className="space-y-10">
+          {newSongs.length > 0 && (
+            <section>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="font-display text-xl font-bold">Nuevo</h2>
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
+                {newSongs.map((song) => (
+                  <SongCard key={song.id} song={song} onPlay={() => playSong(song)} />
+                ))}
+              </div>
+            </section>
+          )}
           {recommendations.map((section) => (
             <section key={section.genre}>
               <div className="mb-4 flex items-center justify-between">
